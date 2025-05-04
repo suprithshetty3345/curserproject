@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern Unlock CAPTCHA</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Resource Booking System</h1>
+        
+        <div class="tabs">
+            <div class="tab active" id="login-tab">Login</div>
+            <div class="tab" id="register-tab">Register</div>
+            <div class="tab" id="admin-tab">Admin Login</div>
+        </div>
+        
+        <!-- User Login Form -->
+        <div class="form-container active" id="login-form">
+            <h2>User Login</h2>
+            <form id="user-login">
+                <div class="input-group">
+                    <label for="user-email">Email</label>
+                    <input type="email" id="user-email" name="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="user-password">Password</label>
+                    <input type="password" id="user-password" name="password" required>
+                </div>
+                
+                <div class="captcha-container">
+                    <h3>Trace Pattern CAPTCHA</h3>
+                    <p>Please trace the arrow pattern to continue</p>
+                    <div class="captcha-wrapper">
+                        <canvas id="user-captcha" width="300" height="300"></canvas>
+                        <div id="user-messages" class="messages"></div>
+                    </div>
+                    <button type="button" id="user-reset-captcha" class="reset-btn">Try New Pattern</button>
+                </div>
+                
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+        
+        <!-- User Registration Form -->
+        <div class="form-container" id="register-form">
+            <h2>Create Account</h2>
+            <form id="register">
+                <div class="input-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" name="password" required minlength="6">
+                </div>
+                <div class="input-group">
+                    <label for="register-confirm">Confirm Password</label>
+                    <input type="password" id="register-confirm" name="confirm" required minlength="6">
+                </div>
+                
+                <div class="captcha-container">
+                    <h3>Trace Pattern CAPTCHA</h3>
+                    <p>Please trace the arrow pattern to continue</p>
+                    <div class="captcha-wrapper">
+                        <canvas id="register-captcha" width="300" height="300"></canvas>
+                        <div id="register-captcha-error" class="error-message"></div>
+                    </div>
+                    <button type="button" id="register-reset-captcha" class="reset-btn">Try New Pattern</button>
+                </div>
+                
+                <div id="register-messages" class="messages"></div>
+                <button type="submit" class="submit-btn">Register</button>
+            </form>
+        </div>
+        
+        <!-- Admin Login Form -->
+        <div class="form-container" id="admin-form">
+            <h2>Admin Login</h2>
+            <form id="admin-login">
+                <div class="input-group">
+                    <label for="admin-email">Admin Email</label>
+                    <input type="email" id="admin-email" name="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="admin-password">Password</label>
+                    <input type="password" id="admin-password" name="password" required>
+                </div>
+                
+                <div class="captcha-container">
+                    <h3>Trace Pattern CAPTCHA</h3>
+                    <p>Please trace the arrow pattern to continue</p>
+                    <div class="captcha-wrapper">
+                        <canvas id="admin-captcha" width="300" height="300"></canvas>
+                        <div id="admin-captcha-error" class="error-message"></div>
+                    </div>
+                    <button type="button" id="admin-reset-captcha" class="reset-btn">Try New Pattern</button>
+                </div>
+                
+                <div id="admin-messages" class="messages"></div>
+                <button type="submit" class="submit-btn">Admin Login</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab switching logic
+            const tabs = document.querySelectorAll('.tab');
+            const formContainers = document.querySelectorAll('.form-container');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and forms
+                    tabs.forEach(t => t.classList.remove('active'));
+                    formContainers.forEach(f => f.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Add active class to corresponding form container
+                    const formId = tab.id.replace('-tab', '-form');
+                    document.getElementById(formId).classList.add('active');
+                    
+                    // Generate new CAPTCHA for the active form
+                    const captchaId = tab.id.replace('-tab', '-captcha');
+                    generateCaptcha(captchaId);
+                });
+            });
+            
+            // Initialize CAPTCHAs
+            generateCaptcha('user-captcha');
+            
+            // Reset CAPTCHA buttons
+            document.getElementById('user-reset-captcha').addEventListener('click', () => {
+                generateCaptcha('user-captcha');
+            });
+            
+            document.getElementById('register-reset-captcha').addEventListener('click', () => {
+                generateCaptcha('register-captcha');
+            });
+            
+            document.getElementById('admin-reset-captcha').addEventListener('click', () => {
+                generateCaptcha('admin-captcha');
+            });
+            
+            // Handle user login
+            document.getElementById('user-login').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const userEmail = document.getElementById('user-email').value;
+                const userPassword = document.getElementById('user-password').value;
+                const userCaptchaPattern = userPatterns['user-captcha'] || [];
+                
+                if (userCaptchaPattern.length === 0) {
+                    document.getElementById('user-messages').innerHTML = 
+                        '<div class="error-message">Please trace the pattern</div>';
+                    return;
+                }
+                
+                // Show loading message
+                document.getElementById('user-messages').innerHTML = 
+                    '<div class="loading-message">Logging in...</div>';
+                
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: userEmail,
+                            password: userPassword,
+                            captchaPattern: userCaptchaPattern
+                        }),
+                        credentials: 'include' // Important for session cookies
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        console.log('User login successful, response:', data);
+                        
+                        // Show success message
+                        document.getElementById('user-messages').innerHTML = 
+                            `<div class="success-message">Login successful. Redirecting...</div>`;
+                        
+                        // Reset form
+                        document.getElementById('user-login').reset();
+                        generateCaptcha('user-captcha');
+                        
+                        // Store user info in sessionStorage (useful for client-side checks)
+                        sessionStorage.clear(); // Clear any existing data
+                        sessionStorage.setItem('userEmail', userEmail);
+                        sessionStorage.setItem('userType', 'user');
+                        sessionStorage.setItem('loggedIn', 'true');
+                        
+                        // Redirect after a short delay to allow user to see success message
+                        setTimeout(() => {
+                            console.log('Redirecting to dashboard...');
+                            window.location.href = data.redirectTo || '/dashboard.html';
+                        }, 1000);
+                    } else {
+                        const errorMessage = data.error || 'Login failed. Please check your credentials.';
+                        document.getElementById('user-messages').innerHTML = 
+                            `<div class="error-message">${errorMessage}</div>`;
+                        
+                        // Regenerate CAPTCHA
+                        generateCaptcha('user-captcha');
+                    }
+                } catch (error) {
+                    console.error('User login error:', error);
+                    document.getElementById('user-messages').innerHTML = 
+                        `<div class="error-message">An error occurred: ${error.message}</div>`;
+                    
+                    // Regenerate CAPTCHA
+                    generateCaptcha('user-captcha');
+                }
+            });
+            
+            // Registration form submission
+            document.getElementById('register').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirm = document.getElementById('register-confirm').value;
+                
+                // Check if passwords match
+                if (password !== confirm) {
+                    document.getElementById('register-messages').innerHTML = 
+                        `<div class="error-message">Passwords do not match</div>`;
+                    return;
+                }
+                
+                // Get the user's drawn pattern
+                const captchaPattern = userPatterns['register-captcha'] || [];
+                
+                if (captchaPattern.length === 0) {
+                    document.getElementById('register-captcha-error').textContent = 'Please trace the pattern';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password, captchaPattern })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Registration failed');
+                    }
+                    
+                    // Success message
+                    document.getElementById('register-messages').innerHTML = 
+                        `<div class="success-message">Registration successful. Please log in.</div>`;
+                    
+                    // Reset form
+                    document.getElementById('register').reset();
+                    generateCaptcha('register-captcha');
+                    
+                    // Switch to login tab
+                    setTimeout(() => {
+                        document.getElementById('login-tab').click();
+                    }, 2000);
+                    
+                } catch (error) {
+                    document.getElementById('register-messages').innerHTML = 
+                        `<div class="error-message">${error.message}</div>`;
+                    generateCaptcha('register-captcha');
+                }
+            });
+            
+            // Admin login handler
+            document.getElementById('admin-login').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                // Clear previous messages
+                document.getElementById('admin-messages').innerHTML = '';
+                
+                // Get form values
+                const adminEmail = document.getElementById('admin-email').value.trim();
+                const adminPassword = document.getElementById('admin-password').value;
+                
+                // Validate form
+                if (!adminEmail || !adminPassword) {
+                    document.getElementById('admin-messages').innerHTML = 
+                        '<div class="error-message">Please fill in all fields</div>';
+                    return;
+                }
+                
+                // Get CAPTCHA pattern - Fixed function to directly use the global array
+                const adminCaptchaPattern = userPatterns['admin-captcha'] || [];
+                
+                // Validate CAPTCHA
+                if (!adminCaptchaPattern || adminCaptchaPattern.length === 0) {
+                    document.getElementById('admin-messages').innerHTML = 
+                        '<div class="error-message">Please complete the CAPTCHA verification</div>';
+                    return;
+                }
+                
+                // Show loading message
+                document.getElementById('admin-messages').innerHTML = 
+                    '<div class="info-message">Authenticating...</div>';
+                
+                console.log('Attempting admin login for:', adminEmail);
+                
+                try {
+                    // Use the dedicated admin login endpoint
+                    const response = await fetch('/api/admin-login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: adminEmail,
+                            password: adminPassword,
+                            captchaPattern: adminCaptchaPattern
+                        }),
+                        credentials: 'include' // Important for session cookies
+                    });
+                    
+                    // Parse response as JSON
+                    const data = await response.json();
+                    console.log('Admin login response:', data);
+                    
+                    if (response.ok) {
+                        console.log('Admin login successful, response:', data);
+                        
+                        // Show success message
+                        document.getElementById('admin-messages').innerHTML = 
+                            `<div class="success-message">Admin login successful. Redirecting...</div>`;
+                        
+                        // Reset form
+                        document.getElementById('admin-login').reset();
+                        generateCaptcha('admin-captcha');
+                        
+                        // Store admin info in sessionStorage (useful for client-side checks)
+                        sessionStorage.clear(); // Clear any existing data
+                        sessionStorage.setItem('adminEmail', adminEmail);
+                        sessionStorage.setItem('adminSessionVerified', 'true');
+                        sessionStorage.setItem('adminRole', data.role || 'admin');
+                        sessionStorage.setItem('isAdmin', 'true');
+                        
+                        // Redirect after a short delay to allow user to see success message
+                        setTimeout(() => {
+                            console.log('Redirecting to admin dashboard...');
+                            window.location.href = data.redirectTo || '/admin-dashboard.html';
+                        }, 1000);
+                    } else {
+                        const errorMessage = data.error || 'Login failed. Please check your credentials.';
+                        document.getElementById('admin-messages').innerHTML = 
+                            `<div class="error-message">${errorMessage}</div>`;
+                        
+                        // Regenerate CAPTCHA
+                        generateCaptcha('admin-captcha');
+                    }
+                } catch (error) {
+                    console.error('Admin login error:', error);
+                    document.getElementById('admin-messages').innerHTML = 
+                        `<div class="error-message">Login failed. Please check your credentials and try again.</div>`;
+                    
+                    // Regenerate CAPTCHA
+                    generateCaptcha('admin-captcha');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

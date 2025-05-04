@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - Resource Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .my-bookings-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 1200px;
+            margin: 50px auto;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            color: #333;
+        }
+        
+        .header-actions .btn-back {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #444;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .header-actions .btn-back:hover {
+            background-color: #e9ecef;
+        }
+        
+        .filter-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-label {
+            font-weight: 500;
+            color: #555;
+            white-space: nowrap;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 140px;
+        }
+        
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .date-picker {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .booking-table-container {
+            overflow-x: auto;
+        }
+        
+        .booking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .booking-table th, 
+        .booking-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .booking-table th {
+            background-color: #f8f9fa;
+            color: #444;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .booking-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-view, .btn-cancel {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-view {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-cancel {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .status-confirmed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .booking-details-container {
+            display: none; /* Hidden by default, shown on booking selection */
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .booking-details-title {
+            margin-top: 0;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .booking-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .detail-group {
+            margin-bottom: 15px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #333;
+        }
+        
+        .detail-notes {
+            grid-column: 1 / -1;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .no-bookings {
+            text-align: center;
+            padding: 40px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            color: #6c757d;
+        }
+        
+        .no-bookings h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #343a40;
+        }
+        
+        .no-bookings p {
+            margin-bottom: 20px;
+        }
+        
+        .no-bookings a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .no-bookings a:hover {
+            background-color: #2980b9;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .booking-details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="my-bookings-container">
+        <div class="page-header">
+            <h1 class="page-title">My Bookings</h1>
+            <div class="header-actions">
+                <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+            </div>
+        </div>
+        
+        <div class="filter-toolbar">
+            <div class="filter-group">
+                <span class="filter-label">Status:</span>
+                <select id="statusFilter" class="filter-select">
+                    <option value="all">All Statuses</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Resource Type:</span>
+                <select id="resourceTypeFilter" class="filter-select">
+                    <option value="all">All Resources</option>
+                    <option value="stadium">Indoor Stadium</option>
+                    <option value="field">Open Fields</option>
+                    <option value="seminar">Seminar Halls</option>
+                    <option value="auditorium">Auditoriums</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Date Range:</span>
+                <div class="date-range">
+                    <input type="date" id="startDate" class="date-picker" placeholder="From">
+                    <span>to</span>
+                    <input type="date" id="endDate" class="date-picker" placeholder="To">
+                </div>
+            </div>
+        </div>
+        
+        <div id="bookingsContent">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <div id="bookingDetails" class="booking-details-container">
+            <!-- Will be populated when viewing a booking -->
+        </div>
+    </div>
+    
+    <script>
+        // Booking data variables
+        let userBookings = [];
+        let userRequests = [];
+        let resources = [];
+        
+        // Initialize the page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date ranges
+            const today = new Date();
+            const pastMonth = new Date();
+            pastMonth.setMonth(today.getMonth() - 1);
+            
+            document.getElementById('startDate').valueAsDate = pastMonth;
+            document.getElementById('endDate').valueAsDate = today;
+            
+            // Add event listeners for filter controls
+            document.getElementById('statusFilter').addEventListener('change', filterBookings);
+            document.getElementById('resourceTypeFilter').addEventListener('change', filterBookings);
+            document.getElementById('startDate').addEventListener('change', filterBookings);
+            document.getElementById('endDate').addEventListener('change', filterBookings);
+            
+            // Check if user is logged in
+            checkUserSession();
+        });
+        
+        // Check if user is logged in
+        async function checkUserSession() {
+            try {
+                console.log('Checking user session...');
+                const response = await fetch('/api/profile');
+                console.log('Profile API response status:', response.status);
+                
+                if (!response.ok) {
+                    console.error('User not logged in:', response.status, response.statusText);
+                    // Redirect to login page if not logged in
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                const userData = await response.json();
+                console.log('User profile fetched successfully:', userData.email);
+                
+                // Fetch user bookings
+                fetchUserBookings(userData.email);
+                
+            } catch (error) {
+                console.error('Error checking user session:', error);
+                document.getElementById('bookingsContent').innerHTML = `
+                    <div class="error-message">
+                        <p>Error checking login status. Please try refreshing the page.</p>
+                        <p>${error.message}</p>
+                        <button onclick="checkUserSession()">Try Again</button>
+                    </div>
+                `;
+                // Don't redirect to avoid potential redirect loop
+            }
+        }
+        
+        // Fetch user bookings from server
+        async function fetchUserBookings(userEmail) {
+            try {
+                // Show loading indicator
+                document.getElementById('bookingsContent').innerHTML = '<div class="loading-indicator">Loading your bookings...</div>';
+                
+                console.log('Fetching bookings for user:', userEmail);
+                
+                // Fetch resources first for reference
+                console.log('Fetching resources...');
+                const resourcesResponse = await fetch('/api/resources');
+                if (!resourcesResponse.ok) {
+                    throw new Error('Failed to fetch resources: ' + resourcesResponse.status);
+                }
+                resources = await resourcesResponse.json();
+                console.log('Resources fetched successfully:', resources.length);
+                
+                // Get user profile to get email if not provided
+                if (!userEmail) {
+                    console.log('No email provided, fetching user profile...');
+                    const profileResponse = await fetch('/api/profile');
+                    if (!profileResponse.ok) {
+                        throw new Error('Failed to fetch user profile: ' + profileResponse.status);
+                    }
+                    
+                    const userData = await profileResponse.json();
+                    userEmail = userData.email;
+                    console.log('User email from profile:', userEmail);
+                }
+                
+                if (!userEmail) {
+                    throw new Error('No user email available. Please try logging in again.');
+                }
+                
+                // Fetch confirmed bookings
+                console.log('Fetching confirmed bookings...');
+                const bookingsResponse = await fetch(`/api/user/bookings?email=${encodeURIComponent(userEmail)}`);
+                if (!bookingsResponse.ok) {
+                    throw new Error('Failed to fetch bookings: ' + bookingsResponse.status);
+                }
+                
+                userBookings = await bookingsResponse.json();
+                console.log('Fetched confirmed bookings:', userBookings.length, userBookings);
+                
+                // Fetch booking requests
+                console.log('Fetching booking requests...');
+                const requestsResponse = await fetch(`/api/user/booking-requests?email=${encodeURIComponent(userEmail)}`);
+                if (!requestsResponse.ok) {
+                    throw new Error('Failed to fetch booking requests: ' + requestsResponse.status);
+                }
+                
+                userRequests = await requestsResponse.json();
+                console.log('Fetched booking requests:', userRequests.length, userRequests);
+                
+                // Fetch user notifications if the endpoint exists
+                try {
+                    console.log('Fetching notifications...');
+                    const notificationsResponse = await fetch('/api/user/notifications');
+                    if (notificationsResponse.ok) {
+                        const notifications = await notificationsResponse.json();
+                        console.log('Notifications fetched:', notifications.length);
+                        
+                        // Process unread notifications
+                        processUnreadNotifications(notifications);
+                    }
+                } catch (error) {
+                    console.warn('Notifications endpoint may not be implemented:', error);
+                    // Continue with rendering even if notifications fail
+                }
+                
+                // Render all bookings
+                console.log('Rendering bookings...');
+                renderBookings();
+                
+            } catch (error) {
+                console.error('Error fetching bookings:', error);
+                document.getElementById('bookingsContent').innerHTML = `
+                    <div class="error-message">
+                        <p>Error loading bookings. Please try refreshing the page.</p>
+                        <p>${error.message}</p>
+                        <button onclick="fetchUserBookings()">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Process unread notifications
+        function processUnreadNotifications(notifications) {
+            // Filter for unread notifications related to booking approvals/rejections
+            const unreadNotifications = notifications.filter(n => 
+                !n.read && (n.type === 'booking_approved' || n.type === 'booking_rejected')
+            );
+            
+            if (unreadNotifications.length > 0) {
+                // Process each unread notification
+                unreadNotifications.forEach(notification => {
+                    // Show a notification to the user
+                    if (notification.type === 'booking_approved') {
+                        showSuccessNotification(notification.message);
+                    } else if (notification.type === 'booking_rejected') {
+                        showErrorNotification(notification.message);
+                    }
+                    
+                    // Mark notification as read
+                    markNotificationAsRead(notification.id);
+                });
+            }
+        }
+        
+        // Mark notification as read
+        async function markNotificationAsRead(notificationId) {
+            try {
+                await fetch('/api/user/notifications/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notificationId })
+                });
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+        
+        // Show success notification
+        function showSuccessNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification success-notification';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-check-circle"></i>
+                    <p>${message}</p>
+                </div>
+                <button class="close-notification">×</button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Add event listener to close button
+            notification.querySelector('.close-notification').addEventListener('click', () => {
+                notification.remove();
+            });
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // Show error notification
+        function showErrorNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification error-notification';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-times-circle"></i>
+                    <p>${message}</p>
+                </div>
+                <button class="close-notification">×</button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Add event listener to close button
+            notification.querySelector('.close-notification').addEventListener('click', () => {
+                notification.remove();
+            });
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // Render bookings based on current filters
+        function renderBookings() {
+            // Get filter values
+            const statusFilter = document.getElementById('statusFilter').value;
+            const resourceTypeFilter = document.getElementById('resourceTypeFilter').value;
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            
+            // Set end date to end of day for inclusive filtering
+            endDate.setHours(23, 59, 59, 999);
+            
+            // Ensure userBookings and userRequests are arrays
+            const bookings = Array.isArray(userBookings) ? userBookings : [];
+            const requests = Array.isArray(userRequests) ? userRequests : [];
+            
+            // Combine and process both confirmed bookings and requests
+            let allBookings = [
+                ...bookings.map(booking => ({
+                    ...booking,
+                    status: booking.status || 'confirmed',
+                    id: booking.bookingId,
+                    type: 'booking'
+                })),
+                ...requests.map(request => ({
+                    ...request,
+                    id: request.requestId,
+                    type: 'request'
+                }))
+            ];
+            
+            // Apply filters
+            let filteredBookings = allBookings.filter(booking => {
+                const bookingDate = new Date(booking.booking_date || booking.date);
+                
+                // Status filter
+                if (statusFilter !== 'all' && booking.status !== statusFilter) {
+                    return false;
+                }
+                
+                // Date range filter
+                if (isNaN(bookingDate.getTime()) || bookingDate < startDate || bookingDate > endDate) {
+                    return false;
+                }
+                
+                // Resource type filter
+                if (resourceTypeFilter !== 'all') {
+                    const resource = resources.find(r => r.id === booking.resourceId);
+                    if (!resource || resource.category !== resourceTypeFilter) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Sort by date, most recent first
+            filteredBookings.sort((a, b) => {
+                const dateA = new Date(a.booking_date || a.date);
+                const dateB = new Date(b.booking_date || b.date);
+                return dateB - dateA;
+            });
+            
+            // Render the filtered bookings
+            const bookingsContent = document.getElementById('bookingsContent');
+            
+            if (filteredBookings.length === 0) {
+                bookingsContent.innerHTML = `
+                    <div class="no-bookings">
+                        <h3>No bookings found</h3>
+                        <p>You don't have any bookings matching the selected filters.</p>
+                        <a href="availability.html">Book a Resource</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Create table with bookings
+            let tableHTML = `
+                <div class="booking-table-container">
+                    <table class="booking-table">
+                        <thead>
+                            <tr>
+                                <th>Resource</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Duration</th>
+                                <th>Purpose</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            filteredBookings.forEach(booking => {
+                // Find resource details
+                const resource = resources.find(r => r.id === booking.resourceId) || { name: booking.resourceId };
+                
+                // Format date from booking_date or date
+                const date = booking.booking_date || booking.date;
+                const bookingDate = new Date(date).toLocaleDateString(undefined, { 
+                    year: 'numeric', month: 'long', day: 'numeric' 
+                });
+                
+                // Format time from time_slot or time
+                const time = booking.time_slot || booking.time || 'Not specified';
+                
+                // Determine status class and text
+                let statusClass = '';
+                let statusText = '';
+                
+                switch (booking.status) {
+                    case 'confirmed':
+                        statusClass = 'status-confirmed';
+                        statusText = 'Confirmed';
+                        break;
+                    case 'pending':
+                        statusClass = 'status-pending';
+                        statusText = 'Pending';
+                        break;
+                    case 'rejected':
+                        statusClass = 'status-rejected';
+                        statusText = 'Rejected';
+                        break;
+                    case 'cancelled':
+                        statusClass = 'status-cancelled';
+                        statusText = 'Cancelled';
+                        break;
+                    case 'approved':
+                        statusClass = 'status-confirmed';
+                        statusText = 'Approved';
+                        break;
+                    default:
+                        statusClass = 'status-pending';
+                        statusText = 'Unknown';
+                }
+                
+                // Create short version of purpose text (max 30 chars)
+                const shortPurpose = booking.purpose ? 
+                    (booking.purpose.length > 30 ? booking.purpose.substring(0, 27) + '...' : booking.purpose) 
+                    : 'Not specified';
+                
+                tableHTML += `
+                    <tr>
+                        <td>${resource.name}</td>
+                        <td>${bookingDate}</td>
+                        <td>${time}</td>
+                        <td>${booking.duration || 1} hour${(booking.duration > 1 || booking.duration === undefined) ? 's' : ''}</td>
+                        <td title="${booking.purpose || ''}">${shortPurpose}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td class="table-actions">
+                            <button class="btn-view" onclick="viewBookingDetails('${booking.id}', '${booking.type}')">View</button>
+                            ${booking.status !== 'rejected' && booking.status !== 'cancelled' ? 
+                                `<button class="btn-cancel" onclick="cancelBooking('${booking.id}', '${booking.type}')">Cancel</button>` : 
+                                ''}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            bookingsContent.innerHTML = tableHTML;
+        }
+        
+        // View booking details
+        function viewBookingDetails(id, type) {
+            // Find the booking
+            console.log(`Finding ${type} with id: ${id}`);
+            
+            // Check inputs
+            if (!id || !type) {
+                showError('Invalid booking information');
+                console.error('Invalid viewBookingDetails parameters:', { id, type });
+                return;
+            }
+            
+            try {
+                let booking = null;
+                
+                if (type === 'booking') {
+                    console.log('Looking in userBookings:', userBookings.length, 'bookings');
+                    booking = userBookings.find(b => b.bookingId === id);
+                    if (!booking) console.log('Booking not found. Available IDs:', userBookings.map(b => b.bookingId));
+                } else if (type === 'request') {
+                    console.log('Looking in userRequests:', userRequests.length, 'requests');
+                    booking = userRequests.find(r => r.requestId === id);
+                    if (!booking) console.log('Request not found. Available IDs:', userRequests.map(r => r.requestId));
+                }
+                
+                if (!booking) {
+                    showError('Booking details not found');
+                    console.error(`Booking with ${type} ID ${id} not found`);
+                    return;
+                }
+                
+                console.log('Found booking details:', booking);
+                
+                // Get resource details - first check from the enhanced API data
+                let resourceDetails = booking.resourceDetails;
+                
+                // If not available from API, find from local resources
+                if (!resourceDetails) {
+                    const resource = resources.find(r => r.id === booking.resourceId);
+                    resourceDetails = resource ? {
+                        name: resource.name,
+                        category: resource.category,
+                        location: resource.location || 'Not specified',
+                        capacity: resource.capacity || 'Not specified'
+                    } : {
+                        name: booking.resourceId,
+                        category: 'Unknown',
+                        location: 'Not specified',
+                        capacity: 'Not specified'
+                    };
+                }
+                
+                // Format date from booking_date or date
+                const dateStr = booking.booking_date || booking.date;
+                const bookingDate = new Date(dateStr).toLocaleDateString(undefined, { 
+                    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+                });
+                
+                // Format time from time_slot or time
+                const timeStr = booking.time_slot || booking.time || 'Not specified';
+                
+                // Determine status class and text
+                let statusClass = '';
+                let statusText = '';
+                
+                switch (booking.status) {
+                    case 'confirmed':
+                        statusClass = 'status-confirmed';
+                        statusText = 'Confirmed';
+                        break;
+                    case 'pending':
+                        statusClass = 'status-pending';
+                        statusText = 'Pending';
+                        break;
+                    case 'rejected':
+                        statusClass = 'status-rejected';
+                        statusText = 'Rejected';
+                        break;
+                    case 'cancelled':
+                        statusClass = 'status-cancelled';
+                        statusText = 'Cancelled';
+                        break;
+                    case 'approved':
+                        statusClass = 'status-confirmed';
+                        statusText = 'Approved';
+                        break;
+                    default:
+                        statusClass = 'status-pending';
+                        statusText = 'Unknown';
+                }
+                
+                // Create HTML for details
+                const detailsHTML = `
+                    <h2 class="booking-details-title">Booking Details</h2>
+                    <div class="booking-details-grid">
+                        <div class="detail-group">
+                            <div class="detail-label">Resource Name:</div>
+                            <div class="detail-value">${resourceDetails.name}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Resource Type:</div>
+                            <div class="detail-value">${getCategoryDisplayName(resourceDetails.category)}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Location:</div>
+                            <div class="detail-value">${resourceDetails.location}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Capacity:</div>
+                            <div class="detail-value">${resourceDetails.capacity}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Status:</div>
+                            <div class="detail-value">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Booking ID:</div>
+                            <div class="detail-value">${type === 'booking' ? booking.bookingId : booking.requestId}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Date:</div>
+                            <div class="detail-value">${bookingDate}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Time:</div>
+                            <div class="detail-value">${timeStr}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Duration:</div>
+                            <div class="detail-value">${booking.duration || 1} hour${(booking.duration > 1 || booking.duration === undefined) ? 's' : ''}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Booked By:</div>
+                            <div class="detail-value">${booking.userEmail}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Expected Attendees:</div>
+                            <div class="detail-value">${booking.attendees || 'Not specified'}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Booked On:</div>
+                            <div class="detail-value">${new Date(booking.createdAt).toLocaleString()}</div>
+                        </div>
+                        
+                        <div class="detail-group" style="grid-column: 1 / -1;">
+                            <div class="detail-label">Purpose:</div>
+                            <div class="detail-value">${booking.purpose || 'Not specified'}</div>
+                        </div>
+                        
+                        ${booking.adminNotes ? `
+                        <div class="detail-notes">
+                            <div class="detail-label">Admin Notes:</div>
+                            <div class="detail-value">${booking.adminNotes}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${booking.status === 'rejected' && booking.rejectionReason ? `
+                        <div class="detail-notes">
+                            <div class="detail-label">Rejection Reason:</div>
+                            <div class="detail-value">${booking.rejectionReason}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${booking.cancelledAt ? `
+                        <div class="detail-notes">
+                            <div class="detail-label">Cancelled On:</div>
+                            <div class="detail-value">${new Date(booking.cancelledAt).toLocaleString()}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="detail-group" style="grid-column: 1 / -1; margin-top: 20px; text-align: right;">
+                            ${booking.status !== 'rejected' && booking.status !== 'cancelled' ? 
+                                `<button class="btn-cancel" onclick="cancelBooking('${id}', '${type}')">Cancel Booking</button>` : 
+                                ''}
+                            <button class="btn-view" onclick="hideBookingDetails()">Close Details</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Show details
+                const detailsContainer = document.getElementById('bookingDetails');
+                detailsContainer.innerHTML = detailsHTML;
+                detailsContainer.style.display = 'block';
+                
+                // Scroll to details
+                detailsContainer.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                showError('Error displaying booking details');
+                console.error('Error in viewBookingDetails:', error);
+            }
+        }
+        
+        // Hide booking details
+        function hideBookingDetails() {
+            const detailsContainer = document.getElementById('bookingDetails');
+            detailsContainer.style.display = 'none';
+        }
+        
+        // Cancel a booking
+        async function cancelBooking(id, type) {
+            if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                let endpoint = '';
+                let body = {};
+                
+                // Get user email
+                const profileResponse = await fetch('/api/profile');
+                if (!profileResponse.ok) {
+                    throw new Error('Failed to fetch user profile');
+                }
+                
+                const userData = await profileResponse.json();
+                
+                if (type === 'booking') {
+                    endpoint = '/api/bookings/cancel';
+                    body = { bookingId: id, userEmail: userData.email };
+                } else {
+                    endpoint = '/api/booking-requests/cancel';
+                    body = { requestId: id, userEmail: userData.email };
+                }
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to cancel booking');
+                }
+                
+                // Success - hide details and refresh
+                hideBookingDetails();
+                showSuccess('Booking successfully cancelled');
+                fetchUserBookings();
+                
+            } catch (error) {
+                showError(error.message || 'Error cancelling booking');
+                console.error('Error cancelling booking:', error);
+            }
+        }
+        
+        // Filter bookings based on current filter settings
+        function filterBookings() {
+            renderBookings();
+        }
+        
+        // Show success notification
+        function showSuccess(message) {
+            const successElement = document.createElement('div');
+            successElement.className = 'notification success';
+            successElement.textContent = message;
+            
+            document.body.appendChild(successElement);
+            
+            setTimeout(() => {
+                successElement.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                successElement.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(successElement);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Show error notification
+        function showError(message) {
+            const errorElement = document.createElement('div');
+            errorElement.className = 'notification error';
+            errorElement.textContent = message;
+            
+            document.body.appendChild(errorElement);
+            
+            setTimeout(() => {
+                errorElement.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                errorElement.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(errorElement);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Helper function to get display name for resource categories
+        function getCategoryDisplayName(category) {
+            switch(category) {
+                case 'stadium':
+                    return 'Indoor Stadium';
+                case 'field':
+                    return 'Outdoor Field';
+                case 'seminar':
+                    return 'Seminar Hall';
+                case 'auditorium':
+                    return 'Auditorium';
+                default:
+                    return category ? (category.charAt(0).toUpperCase() + category.slice(1)) : 'Unknown';
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Booking Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+        integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Debug info -->
+    <script>
+        console.log('[Debug] Dashboard HTML loaded');
+        console.log('[Debug] Session storage contents:', {
+            userEmail: sessionStorage.getItem('userEmail'),
+            loggedIn: sessionStorage.getItem('loggedIn'),
+            userType: sessionStorage.getItem('userType')
+        });
+    </script>
+    <style>
+        .dashboard-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 1200px;
+            margin: 50px auto;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .dashboard-title {
+            font-size: 24px;
+            color: #333;
+        }
+        
+        .user-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .user-info h3 {
+            margin-top: 0;
+            color: #506690;
+        }
+        
+        #logout-btn {
+            background-color: #f8f9fa;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #logout-btn:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Resource Cards Styles */
+        .resource-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .resource-category {
+            margin-bottom: 40px;
+        }
+
+        .category-header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-title {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .resource-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .resource-card {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background-color: white;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-image {
+            height: 180px;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .resource-card:hover .card-image img {
+            transform: scale(1.05);
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #444;
+            font-size: 18px;
+        }
+
+        .card-description {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .card-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        .card-button:hover {
+            background-color: #2980b9;
+        }
+
+        .resource-tag {
+            display: inline-block;
+            background-color: #e9f7fe;
+            color: #3498db;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .resource-capacity {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        /* Category specific colors */
+        .tag-stadium {
+            background-color: #e3f2fd;
+            color: #2196f3;
+        }
+
+        .tag-field {
+            background-color: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .tag-seminar {
+            background-color: #fff8e1;
+            color: #ff9800;
+        }
+
+        .tag-auditorium {
+            background-color: #f3e5f5;
+            color: #9c27b0;
+        }
+
+        /* Booking type indicators */
+        .tag-direct {
+            background-color: #e8f5e9;
+            color: #4caf50;
+            margin-left: 10px;
+        }
+
+        .tag-approval {
+            background-color: #fff8e1;
+            color: #ff9800;
+            margin-left: 10px;
+        }
+        
+        /* My Bookings section */
+        .my-bookings {
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .booking-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .booking-tab {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            margin-right: 5px;
+            font-weight: bold;
+            color: #6c757d;
+        }
+        
+        .booking-tab.active {
+            background-color: white;
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .booking-content {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0 5px 5px 5px;
+            padding: 20px;
+        }
+        
+        .booking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .booking-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .booking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .booking-details {
+            flex: 3;
+        }
+        
+        .booking-resource {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .booking-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .booking-status {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-confirmed {
+            background-color: #e8f5e9;
+            color: #4caf50;
+        }
+        
+        .status-pending {
+            background-color: #fff8e1;
+            color: #ff9800;
+        }
+        
+        .status-rejected {
+            background-color: #ffebee;
+            color: #f44336;
+        }
+        
+        .booking-actions {
+            flex: 1;
+            text-align: right;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        
+        .view-btn {
+            background-color: #e3f2fd;
+            color: #2196f3;
+            border: 1px solid #bbdefb;
+        }
+        
+        .cancel-btn {
+            background-color: #ffebee;
+            color: #f44336;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .empty-bookings {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        .empty-bookings p {
+            margin-bottom: 20px;
+        }
+
+        /* Resource Frozen Styles */
+        .resource-status {
+            display: inline-block;
+            padding: 4px 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .resource-frozen {
+            background-color: #e74c3c;
+        }
+        
+        .card.frozen {
+            opacity: 0.8;
+            border: 1px solid #e74c3c;
+        }
+        
+        .card.frozen::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(231, 76, 60, 0.05);
+            pointer-events: none;
+        }
+        
+        .card.frozen .book-btn {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- User Session Check -->
+    <div id="loading-screen" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; background-color: rgba(255, 255, 255, 0.9); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;">
+        <div class="spinner" style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p id="loading-message" style="margin-top: 20px; font-size: 18px;">Verifying user session...</p>
+        <div id="error-container" style="display: none; margin-top: 20px; text-align: center;">
+            <p id="error-message" style="color: #e74c3c; font-weight: bold;"></p>
+            <button id="retry-button" style="margin-top: 10px; padding: 8px 16px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">Retry</button>
+            <button id="go-to-login" style="margin-top: 10px; margin-left: 10px; padding: 8px 16px; background-color: #7f8c8d; color: white; border: none; border-radius: 4px; cursor: pointer;">Go to Login</button>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script>
+        // Function to show error and retry options
+        function showError(message) {
+            document.getElementById('loading-message').style.display = 'none';
+            document.getElementById('error-container').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+        
+        // Retry button handler
+        document.getElementById('retry-button').addEventListener('click', function() {
+            document.getElementById('loading-message').style.display = 'block';
+            document.getElementById('error-container').style.display = 'none';
+            checkUserSession();
+        });
+        
+        // Go to login button handler
+        document.getElementById('go-to-login').addEventListener('click', function() {
+            window.location.href = '/index.html';
+        });
+        
+        // Function to check user session
+        async function checkUserSession() {
+            console.log('[Debug] Checking user session');
+            
+            // First check if we have session data in browser storage
+            const loggedIn = sessionStorage.getItem('loggedIn');
+            const userType = sessionStorage.getItem('userType');
+            const userEmail = sessionStorage.getItem('userEmail');
+            
+            console.log('[Debug] Session storage check:', { loggedIn, userType, userEmail });
+            
+            if (loggedIn === 'true' && userType === 'user' && userEmail) {
+                console.log('[Debug] User session found in storage, showing dashboard');
+                // Show dashboard immediately based on session storage
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+                document.getElementById('user-email').textContent = userEmail;
+                
+                // Still verify with server in background
+                verifyWithServer(false);
+                return;
+            }
+            
+            // Otherwise, verify with server before showing dashboard
+            await verifyWithServer(true);
+        }
+        
+        // Function to verify session with server
+        async function verifyWithServer(blockUI) {
+            try {
+                console.log('[Debug] Verifying with server, blockUI:', blockUI);
+                
+                const response = await fetch('/api/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Important to include cookies
+                });
+                
+                console.log('[Debug] Server response status:', response.status);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Your session has expired. Please log in again.');
+                    }
+                    throw new Error('Server error: ' + response.status);
+                }
+                
+                const data = await response.json();
+                console.log('[Debug] User verification successful:', data);
+                
+                // Update session storage
+                sessionStorage.setItem('userEmail', data.email);
+                sessionStorage.setItem('loggedIn', 'true');
+                sessionStorage.setItem('userType', 'user');
+                
+                // Show dashboard if we were blocking the UI
+                if (blockUI) {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('dashboard-content').style.display = 'block';
+                    
+                    // Update UI with user data
+                    document.getElementById('user-email').textContent = data.email || 'User';
+                    document.getElementById('account-created').textContent = 
+                        data.created_at ? new Date(data.created_at).toLocaleString() : 'N/A';
+                    
+                    // Set up booking tabs
+                    setupBookingTabs();
+                    
+                    // Set up logout button
+                    setupLogoutButton();
+                    
+                    // Set up resource card buttons
+                    setupResourceCardButtons();
+                    
+                    // Populate bookings
+                    populateBookings();
+                }
+
+                // Now initialize the dashboard functionality from the dashboard.js file
+                if (typeof initializeDashboard === 'function') {
+                    console.log('[Debug] Calling initializeDashboard function');
+                    initializeDashboard();
+                } else {
+                    console.error('[Debug] initializeDashboard function not available yet');
+                    // Wait for dashboard.js to load and then try again
+                    setTimeout(() => {
+                        if (typeof initializeDashboard === 'function') {
+                            initializeDashboard();
+                        }
+                    }, 500);
+                }
+
+                return true;
+            } catch (error) {
+                console.error('[Debug] Session verification failed:', error);
+                
+                if (blockUI) {
+                    // Show error with retry option
+                    showError(error.message || 'Failed to verify your session. Please try again or log in.');
+                } else {
+                    // If not blocking UI but session is invalid, redirect to login
+                    window.location.href = '/index.html';
+                }
+                
+                return false;
+            }
+        }
+        
+        // Setup functions
+        function setupLogoutButton() {
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        try {
+            if(confirm('Are you sure you want to logout?')) {
+                // Clear session storage
+                sessionStorage.clear();
+                localStorage.clear();
+                
+                // Redirect to login page
+                window.location.href = 'index.html';
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            alert('Error during logout. Please try again.');
+        }
+    });
+}
+
+        function setupResourceCardButtons() {
+            document.querySelectorAll('.card-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const card = this.closest('.resource-card');
+                    const resourceName = card.querySelector('.card-title').textContent;
+                    const resourceType = card.querySelector('.resource-tag').textContent.toLowerCase();
+                    
+                    // Determine the resource type for filtering
+                    let filterType = 'all';
+                    if (resourceType.includes('stadium')) {
+                        filterType = 'stadium';
+                    } else if (resourceType.includes('field')) {
+                        filterType = 'field';
+                    } else if (resourceType.includes('seminar')) {
+                        filterType = 'seminar';
+                    }
+                    
+                    // Redirect to availability page with filter
+                    window.location.href = `availability.html?type=${filterType}`;
+                });
+            });
+        }
+
+        function setupBookingTabs() {
+            const bookingTabs = document.querySelectorAll('.booking-tab');
+            
+            bookingTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    bookingTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all booking lists
+                    document.querySelectorAll('.booking-list').forEach(list => {
+                        list.style.display = 'none';
+                    });
+                    
+                    // Show the corresponding booking list
+                    const tabName = this.getAttribute('data-tab');
+                    document.getElementById(`${tabName}-bookings`).style.display = 'block';
+                });
+            });
+        }
+
+        function populateBookings() {
+            // Get bookings and requests from localStorage
+            const bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+            const requests = JSON.parse(localStorage.getItem('bookingRequests')) || [];
+            
+            // Populate confirmed bookings
+            const confirmedContainer = document.getElementById('confirmed-bookings');
+            if (bookings.length > 0) {
+                confirmedContainer.innerHTML = '';
+                
+                bookings.forEach(booking => {
+                    const bookingItem = createBookingItem(booking, 'confirmed');
+                    confirmedContainer.appendChild(bookingItem);
+                });
+            }
+            
+            // Populate pending requests
+            const pendingContainer = document.getElementById('pending-bookings');
+            if (requests.length > 0) {
+                pendingContainer.innerHTML = '';
+                
+                requests.forEach(request => {
+                    const requestItem = createBookingItem(request, 'pending');
+                    pendingContainer.appendChild(requestItem);
+                });
+            }
+        }
+
+        function createBookingItem(booking, type) {
+            const item = document.createElement('div');
+            item.className = 'booking-item';
+            
+            // Format date
+            const bookingDate = new Date(booking.date).toLocaleDateString(undefined, { 
+                year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            
+            // Status badge class based on type
+            const statusClass = type === 'confirmed' ? 'status-confirmed' : 'status-pending';
+            const statusText = type === 'confirmed' ? 'Confirmed' : 'Pending Approval';
+            
+            item.innerHTML = `
+                <div class="booking-details">
+                    <div class="booking-resource">${booking.resourceName}</div>
+                    <div class="booking-meta">${bookingDate}, ${booking.time} for ${booking.duration} hour${booking.duration > 1 ? 's' : ''}</div>
+                </div>
+                <div class="booking-status">
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+                <div class="booking-actions">
+                    <button class="action-btn view-btn" data-ref="${booking.reference}" data-type="${type === 'confirmed' ? 'direct' : 'request'}">View</button>
+                    <button class="action-btn cancel-btn" data-ref="${booking.reference}" data-type="${type}">Cancel</button>
+                </div>
+            `;
+            
+            // Add event listeners for the buttons
+            item.querySelector('.view-btn').addEventListener('click', function() {
+                const ref = this.getAttribute('data-ref');
+                const bookingType = this.getAttribute('data-type');
+                
+                // Redirect to booking confirmation page
+                window.location.href = `booking-confirmation.html?ref=${ref}&type=${bookingType}`;
+            });
+            
+            item.querySelector('.cancel-btn').addEventListener('click', function() {
+                const ref = this.getAttribute('data-ref');
+                const bookingType = this.getAttribute('data-type');
+                
+                if (confirm('Are you sure you want to cancel this booking?')) {
+                    // Remove the booking from localStorage
+                    if (bookingType === 'confirmed') {
+                        const bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+                        const updatedBookings = bookings.filter(b => b.reference !== ref);
+                        localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+                    } else {
+                        const requests = JSON.parse(localStorage.getItem('bookingRequests')) || [];
+                        const updatedRequests = requests.filter(r => r.reference !== ref);
+                        localStorage.setItem('bookingRequests', JSON.stringify(updatedRequests));
+                    }
+                    
+                    // Refresh the bookings display
+                    populateBookings();
+                    
+                    // Show confirmation
+                    alert('Booking canceled successfully');
+                }
+            });
+            
+            return item;
+        }
+        
+        // Verify user session when page loads
+        document.addEventListener('DOMContentLoaded', checkUserSession);
+    </script>
+
+    <div id="dashboard-content" style="display: none;">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <div class="dashboard-title">
+                    <h1>Resource Booking Dashboard</h1>
+                </div>
+                <div class="header-actions">
+                    <a href="availability.html" class="btn-availability">View Availability</a>
+                </div>
+               
+            </div>
+            <div class="events-section">
+                <h3>Running Events</h3>
+                <ul id="events-list">
+                    <!-- Events will be dynamically added here -->
+                </ul>
+            
+                <h4>Add New Event</h4>
+                <form id="add-event-form">
+                    <input type="text" id="event-title" placeholder="Event Title" required />
+                    <textarea id="event-description" placeholder="Event Description" required></textarea>
+                    <input type="file" id="event-image" accept="image/*" required />
+                    <button type="submit">Post Event</button>
+                </form>
+            </div>
+            <div class="user-info">
+                <h3>Welcome, <span id="user-email">Loading...</span></h3>
+                <p><strong>Account created:</strong> <span id="account-created">Loading...</span></p>
+                <p class="user-actions">
+                    <a href="my-bookings.html" class="btn-view-bookings">View My Bookings</a>
+                    <button id="logout-btn">Logout</button>
+                </p>
+            </div>
+            
+            <!-- Search and Filter Section -->
+            <div class="search-filter-section">
+                <div class="search-container">
+                    <input type="text" id="resource-search" placeholder="Search resources by name...">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="stadium">Indoor Stadium</button>
+                        <button class="filter-btn" data-filter="field">Open Field</button>
+                        <button class="filter-btn" data-filter="seminar">Seminar Halls</button>
+                        <button class="filter-btn" data-filter="auditorium">Auditoriums</button>
+                    </div>
+                </div>
+                <div class="no-results-message" style="display: none;">
+                    <p>No resources found matching your search criteria.</p>
+                </div>
+            </div>
+            
+            <!-- My Bookings Section -->
+            <div class="my-bookings">
+                <h2 class="section-title">My Bookings</h2>
+                
+                <div class="booking-tabs">
+                    <button class="booking-tab active" data-tab="confirmed">Confirmed Bookings</button>
+                    <button class="booking-tab" data-tab="pending">Booking Requests</button>
+                </div>
+                
+                <div class="booking-tab-content">
+                    <div id="confirmed-bookings" class="booking-list active">
+                        <div class="loading-bookings">Loading your bookings...</div>
+                    </div>
+                    <div id="pending-bookings" class="booking-list">
+                        <div class="loading-bookings">Loading your booking requests...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Available Resources Section -->
+            <div class="resource-section">
+                <h2 class="section-title">Available Resources</h2>
+                
+                <!-- Indoor Stadium Section -->
+                <div class="resource-category">
+                    <div class="category-header">
+                        <h3 class="category-title">Indoor Stadium</h3>
+                    </div>
+                    <div class="resource-cards">
+                        <!-- Badminton Courts -->
+                        <div class="resource-card" data-resource-id="badminton_court_1">
+                            <div class="card-image">
+                                <img src="https://images.shiksha.com/mediadata/images/1488799325phpZsy1PC.jpeg" alt="Badminton Court 1">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-stadium">Indoor Stadium</span>
+                                <h3 class="card-title">Badminton Court 1</h3>
+                                <p class="resource-capacity">Capacity: 4 players</p>
+                                <p class="card-description">Professional-grade badminton court with proper lighting and flooring.</p>
+                                <!-- Replace the existing button with this anchor styled as a button -->
+<a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource-id="badminton_court_2">
+                            <div class="card-image">
+                                <img src="data:image/jpeg;base64,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" alt="Badminton Court 2">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-stadium">Indoor Stadium</span>
+                                <h3 class="card-title">Badminton Court 2</h3>
+                                <p class="resource-capacity">Capacity: 4 players</p>
+                                <p class="card-description">Standard badminton court with equipment available on request.</p>
+                               <!-- Replace the existing button with this anchor styled as a button -->
+                               <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource-id="badminton_court_3">
+                            <div class="card-image">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8I3ej7Ox98XohXgwY1DD78CBRN9w7e8d_s8k7C3SF_Sn5xlz6lZGV1fk3cYinylCTy48&usqp=CAU" alt="Badminton Court 3">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-stadium">Indoor Stadium</span>
+                                <h3 class="card-title">Basketball Court</h3>
+                                <p class="resource-capacity">Capacity: 4 players</p>
+                                <p class="card-description">Tournament-ready badminton court with spectator seating.</p>
+                                <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Open Field Section -->
+                <div class="resource-category">
+                    <div class="category-header">
+                        <h3 class="category-title">Open Fields</h3>
+                    </div>
+                    <div class="resource-cards">
+                        <div class="resource-card" data-resource-id="main_sports_field">
+                            <div class="card-image">
+                                <img src="https://images.shiksha.com/mediadata/images/1744391197phpQ6ApO6.jpeg">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-field">Open Field</span>
+                                <h3 class="card-title">Cricket Field</h3>
+                                <p class="resource-capacity">Capacity: 50+ players</p>
+                                <p class="card-description">Multi-purpose open field suitable for football, cricket, and athletic events.</p>
+                                <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+                        
+                            <div class="resource-cards">
+                                <div class="resource-card" data-resource-id="main_sports_field">
+                                    <div class="card-image">
+                                        <img src="https://www.bmsca.org/assets/images/portfolio/other-facilities-2/17.jpg">
+                                    </div>
+                                    <div class="card-content">
+                                        <span class="resource-tag tag-field">Open Field</span>
+                                        <h3 class="card-title">football field</h3>
+                                        <p class="resource-capacity">Capacity: 50+ players</p>
+                                        <p class="card-description">Multi-purpose open field suitable for football, cricket, and athletic events.</p>
+                                        <a href="availability.html" class="card-button">View Availability</a>
+                                    </div>
+                                </div>
+                    </div>
+                </div>
+
+                <!-- Seminar Halls Section -->
+                <div class="resource-category">
+                    <div class="category-header">
+                        <h3 class="category-title">Seminar Halls by Department</h3>
+                    </div>
+                    <div class="resource-cards">
+                        <div class="resource-card" data-resource-id="cs_seminar_hall">
+                            <div class="card-image">
+                                <img src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="CS Seminar Hall">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-seminar">CS Department</span>
+                                <h3 class="card-title">CS Seminar Hall</h3>
+                                <p class="resource-capacity">Capacity: 120 people</p>
+                                <p class="card-description">Computer Science department seminar hall with advanced presentation equipment.</p>
+                                <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource-id="is_seminar_hall">
+                            <div class="card-image">
+                                <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="IS Seminar Hall">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-seminar">IS Department</span>
+                                <h3 class="card-title">IS Seminar Hall</h3>
+                                <p class="resource-capacity">Capacity: 100 people</p>
+                                <p class="card-description">Information Science department seminar hall with modern AV systems.</p>
+                                <!-- Replace the existing button with this anchor styled as a button -->
+<a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource-id="ec_seminar_hall">
+                            <div class="card-image">
+                                <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="EC Seminar Hall">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-seminar">EC Department</span>
+                                <h3 class="card-title">EC Seminar Hall</h3>
+                                <p class="resource-capacity">Capacity: 150 people</p>
+                                <p class="card-description">Electronics & Communication department seminar hall with excellent acoustics.</p>
+                               <!-- Replace the existing button with this anchor styled as a button -->
+                     <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource-id="aiml_seminar_hall">
+                            <div class="card-image">
+                                <img src="https://images.unsplash.com/photo-1570126646281-5ec88111777f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="AIML Seminar Hall">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-seminar">AIML Department</span>
+                                <h3 class="card-title">AIML Seminar Hall</h3>
+                                <p class="resource-capacity">Capacity: 80 people</p>
+                                <p class="card-description">AI & ML department seminar hall with smart presentation capabilities.</p>
+                                <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource-id="mech_seminar_hall">
+                            <div class="card-image">
+                                <img src="https://images.unsplash.com/photo-1628624747186-a941c476b7ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Mechanical Seminar Hall">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-seminar">Mechanical Department</span>
+                                <h3 class="card-title">Mechanical Seminar Hall</h3>
+                                <p class="resource-capacity">Capacity: 130 people</p>
+                                <p class="card-description">Mechanical Engineering department seminar hall with demonstration capabilities.</p>
+                                <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jubilee Auditorium Section -->
+                <div class="resource-category">
+                    <div class="category-header">
+                        <h3 class="category-title">Jubilee Auditoriums</h3>
+                        <span class="resource-tag tag-approval">Requires Admin Approval</span>
+                    </div>
+                    <div class="resource-cards">
+                        <div class="resource-card" data-resource-id="jubilee_auditorium_1">
+                            <div class="card-image">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL2-D2GAbLQfGoV5MP8FkBJXe2qpX5oOmibn8etuR8jF_I_o_ReW3oMqilxOqwRjgZyQg&usqp=CAU" alt="Jubilee Auditorium 1">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-auditorium">Auditorium</span>
+                                <h3 class="card-title">Jubilee Auditorium 1</h3>
+                                <p class="resource-capacity">Capacity: 500 people</p>
+                                <p class="card-description">Large auditorium suitable for conferences, cultural programs, and major events.</p>
+                                <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card" data-resource-id="jubilee_auditorium_2">
+                            <div class="card-image">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcmpX1KjizwCvX0ONw3g4ng3THaD_Ffqzb7IIvs6cmBirjbNhKqJnGaO63YGaI4k_j3Zw&usqp=CAU" alt="Jubilee Auditorium 2">
+                            </div>
+                            <div class="card-content">
+                                <span class="resource-tag tag-auditorium">Auditorium</span>
+                                <h3 class="card-title">Jubilee Auditorium 2</h3>
+                                <p class="resource-capacity">Capacity: 350 people</p>
+                                <p class="card-description">Medium-sized auditorium with state-of-the-art acoustics and lighting.</p>
+                                <a href="availability.html" class="card-button">View Availability</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add styles for bookings section -->
+    <style>
+        /* Booking section styles */
+        .my-bookings {
+            margin-bottom: 40px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .booking-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .booking-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: bold;
+            color: #777;
+            transition: all 0.3s;
+        }
+        
+        .booking-tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        
+        .booking-list {
+            display: none;
+        }
+        
+        .booking-list.active {
+            display: block;
+        }
+        
+        .booking-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .booking-details {
+            flex: 1;
+        }
+        
+        .booking-resource {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .booking-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .booking-status {
+            margin: 0 15px;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .status-confirmed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .booking-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .view-btn:hover {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .empty-bookings {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+        }
+        
+        .loading-bookings {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-style: italic;
+        }
+        
+        /* Resource tag styles */
+        .resource-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .tag-stadium {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .tag-field {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .tag-seminar {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .tag-auditorium {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .tag-approval {
+            background-color: #fff3cd;
+            color: #856404;
+            margin-left: 10px;
+        }
+        
+        .resource-capacity {
+            color: #6c757d;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        /* Buttons for approval required resources */
+        .request-button {
+            background-color: #fd7e14;
+        }
+        
+        .request-button:hover {
+            background-color: #e76b00;
+        }
+    </style>
+    
+    <!-- Booking tab functionality -->
+    <script>
+        // Function to set up booking tabs
+        function setupBookingTabs() {
+            const tabs = document.querySelectorAll('.booking-tab');
+            const contents = document.querySelectorAll('.booking-list');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabType = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    contents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabType + '-bookings') {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+        
+        // Set up booking tabs when document is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.querySelector('.booking-tab')) {
+                setupBookingTabs();
+            }
+        });
+    </script>
+    
+    <!-- Add additional styles for modals -->
+    <style>
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .btn-cancel {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        
+        /* Form styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        /* Booking detail styles */
+        .booking-detail-item {
+            margin-bottom: 12px;
+            display: flex;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            width: 130px;
+            color: #555;
+        }
+        
+        .detail-value {
+            flex: 1;
+        }
+    </style>
+    
+    <!-- Include the dashboard script -->
+    <script src="dashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const eventsList = document.getElementById('events-list');
+            const addEventForm = document.getElementById('add-event-form');
+            const eventTitleInput = document.getElementById('event-title');
+            const eventDescriptionInput = document.getElementById('event-description');
+            const eventImageInput = document.getElementById('event-image');
+    
+            // Load existing events from localStorage
+            const events = JSON.parse(localStorage.getItem('events')) || [];
+    
+            // Function to render events
+            function renderEvents() {
+                eventsList.innerHTML = '';
+                events.forEach((event) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <img src="${event.image}" alt="${event.title}" />
+                        <div>
+                            <strong>${event.title}</strong>
+                            <p>${event.description}</p>
+                        </div>
+                    `;
+                    eventsList.appendChild(li);
+                });
+            }
+    
+            // Handle form submission
+            addEventForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+    
+                const reader = new FileReader();
+                const file = eventImageInput.files[0];
+    
+                reader.onload = function () {
+                    const newEvent = {
+                        title: eventTitleInput.value,
+                        description: eventDescriptionInput.value,
+                        image: reader.result, // Base64 image data
+                    };
+    
+                    // Add new event to the list and save to localStorage
+                    events.push(newEvent);
+                    localStorage.setItem('events', JSON.stringify(events));
+    
+                    // Clear the form
+                    eventTitleInput.value = '';
+                    eventDescriptionInput.value = '';
+                    eventImageInput.value = '';
+    
+                    // Re-render the events
+                    renderEvents();
+                };
+    
+                if (file) {
+                    reader.readAsDataURL(file);
+                }
+            });
+    
+            // Initial render
+            renderEvents();
+        });
+    </script>
+</body>
+</html> 

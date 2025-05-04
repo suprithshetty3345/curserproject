@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Availability</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .availability-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            color: #333;
+            margin: 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            color: #495057;
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-back:hover {
+            background-color: #e9ecef;
+        }
+        
+        .resource-filter {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .filter-select {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            min-width: 180px;
+        }
+        
+        .date-picker {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .availability-grid {
+            margin-bottom: 30px;
+        }
+        
+        .resource-availability {
+            margin-bottom: 40px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .resource-header {
+            background-color: #e9ecef;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .resource-info {
+            flex: 1;
+        }
+        
+        .resource-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 5px 0;
+        }
+        
+        .resource-details {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .resource-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-book {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-book:hover {
+            background-color: #2980b9;
+        }
+        
+        .no-resources {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        /* Modal Styles */
+        .modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal-container.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+        
+        .modal-box {
+            position: relative;
+            background-color: #fff;
+            max-width: 500px;
+            width: 90%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #aaa;
+            z-index: 3;
+        }
+        
+        .modal-close:hover {
+            color: #555;
+        }
+        
+        .modal-content {
+            padding: 20px;
+        }
+        
+        /* Booking Form Styles */
+        .booking-modal h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .field-note {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .approval-note {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #fff8e1;
+            border-left: 3px solid #ffb300;
+            font-size: 13px;
+            color: #856404;
+            border-radius: 4px;
+        }
+        
+        .approval-note.hidden {
+            display: none;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .btn-cancel {
+            padding: 8px 15px;
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-submit {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .btn-submit:hover {
+            background-color: #2980b9;
+        }
+        
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1100;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .notification.success {
+            background-color: #4caf50;
+        }
+        
+        .notification.error {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Resource Booking</h1>
+            </div>
+            <div class="sidebar-menu">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="availability.html" class="active">Check Availability</a>
+                <a href="my-bookings.html">My Bookings</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="hamburger-menu">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">Loading...</span>
+                    <a href="#" class="logout-btn" onclick="logout()">Logout</a>
+                </div>
+            </div>
+            
+            <div class="availability-container">
+                <div class="page-header">
+                    <h1>Resource Availability</h1>
+                    <div class="header-actions">
+                        <a href="dashboard.html" class="btn-back">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="resource-filter">
+                    <div class="filter-group">
+                        <label class="filter-label">Date:</label>
+                        <input type="date" id="availability-date" class="date-picker">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Category:</label>
+                        <select id="category-filter" class="filter-select">
+                            <option value="all">All Resources</option>
+                            <option value="stadium">Indoor Stadiums</option>
+                            <option value="field">Open Fields</option>
+                            <option value="seminar">Seminar Halls</option>
+                            <option value="auditorium">Auditoriums</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="availability-grid" class="availability-grid">
+                    <!-- Resource availability will be loaded here by JavaScript -->
+                    <div class="loading-indicator">
+                        <p>Loading resources...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="availability.js"></script>
+    <script>
+        // Mobile menu toggle
+        document.querySelector('.hamburger-menu').addEventListener('click', function() {
+            document.querySelector('.main-wrapper').classList.toggle('sidebar-open');
+        });
+        
+        // Load user profile
+        function loadUserProfile() {
+            fetch('/api/profile')
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            // Not authenticated, redirect to login
+                            window.location.href = '/index.html';
+                            return;
+                        }
+                        throw new Error('Failed to load profile');
+                    }
+                    return response.json();
+                })
+                .then(user => {
+                    // Update user name in the UI
+                    document.querySelector('.user-name').textContent = user.email || 'User';
+                })
+                .catch(error => {
+                    console.error('Error loading profile:', error);
+                });
+        }
+        
+        // Logout function
+        function logout() {
+            try {
+                // Show loading indicator
+                const logoutBtn = document.getElementById('logout-btn');
+                const originalText = logoutBtn.textContent;
+                logoutBtn.textContent = 'Logging out...';
+                logoutBtn.disabled = true;
+                
+                // Use POST method for logout as expected by the server
+                fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Logout successful');
+                        // Clear any client-side data
+                        sessionStorage.clear();
+                        localStorage.removeItem('userProfile');
+                        // Redirect to login page
+                        window.location.href = '/index.html';
+                    } else {
+                        console.error('Logout failed:', response);
+                        alert('Logout failed. Please try again.');
+                        // Reset button
+                        logoutBtn.textContent = originalText;
+                        logoutBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    alert('Error during logout. Please try again.');
+                    // Reset button
+                    logoutBtn.textContent = originalText;
+                    logoutBtn.disabled = false;
+                });
+            } catch (error) {
+                console.error('Unexpected logout error:', error);
+                alert('Error during logout. Please try again.');
+                // Reset button in case of unexpected error
+                const logoutBtn = document.getElementById('logout-btn');
+                logoutBtn.textContent = 'Logout';
+                logoutBtn.disabled = false;
+            }
+        }
+        
+        // Load user profile on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserProfile();
+        });
+    </script>
+</body>
+</html> 
