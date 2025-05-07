@@ -5,10 +5,23 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const mongoose = require('mongoose');
+const Booking = require('./public/booking');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+const mongoURI = 'mongodb://localhost:27017/bookingDb'; 
+
+
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('MongoDB connected successfully!');
+  })
+  .catch((err) => {
+    console.log('Error connecting to MongoDB:', err);
+  });
 
 // Use cors middleware with proper configuration
 app.use(cors({
@@ -1345,7 +1358,7 @@ app.delete('/api/admin/bookings/:bookingId', (req, res) => {
 });
 
 // Direct booking endpoint
-app.post('/api/bookings', (req, res) => {
+app.post('/api/bookings', async (req, res) => {
     const { userEmail, resourceId, date, time, duration, purpose, attendees, captchaPattern, booking_date, time_slot } = req.body;
     
     // Basic validation
@@ -1405,6 +1418,10 @@ app.post('/api/bookings', (req, res) => {
     
     // Save booking
     bookings.push(booking);
+
+    //save to mongodb
+    const bookingDoc = new Booking(booking);
+    await bookingDoc.save();
     
     // Send confirmation email to the user
     sendEmailNotification(userEmail, "Booking Confirmation", booking);
