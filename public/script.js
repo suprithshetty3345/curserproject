@@ -230,6 +230,8 @@ function shuffleArray(array) {
 }
 
 function generateCaptcha(captchaId) {
+    console.log('Generating CAPTCHA for:', captchaId);
+    
     // Generate random grid size
     const rows = Math.floor(Math.random() * (MAX_GRID_SIZE - MIN_GRID_SIZE + 1)) + MIN_GRID_SIZE;
     const cols = Math.floor(Math.random() * (MAX_GRID_SIZE - MIN_GRID_SIZE + 1)) + MIN_GRID_SIZE;
@@ -242,6 +244,13 @@ function generateCaptcha(captchaId) {
     // Generate pattern
     const totalNodes = rows * cols;
     expectedPatterns[captchaId] = generateRandomPattern(rows, cols);
+    
+    console.log('Generated CAPTCHA:', {
+        captchaId,
+        gridSize: { rows, cols },
+        expectedPattern: expectedPatterns[captchaId],
+        userPattern: userPatterns[captchaId]
+    });
     
     // Generate random number aliases (30-99)
     numberAliases[captchaId] = Array(totalNodes).fill().map(() => Math.floor(Math.random() * 70) + 30);
@@ -471,6 +480,7 @@ function setupCanvasEvents(canvas, captchaId) {
 }
 
 function handleMouseDown(e, captchaId) {
+    console.log('Mouse down on CAPTCHA:', captchaId);
     isDrawing[captchaId] = true;
     userPatterns[captchaId] = [];
     selectedCircles[captchaId] = [];
@@ -495,6 +505,11 @@ function handleMouseDown(e, captchaId) {
                 circle.selected = true;
                 selectedCircles[captchaId].push(circle);
                 userPatterns[captchaId].push(circle.index);
+                console.log('Added first point to pattern:', {
+                    captchaId,
+                    circleIndex: circle.index,
+                    currentPattern: userPatterns[captchaId]
+                });
                 break;
             }
         }
@@ -519,6 +534,11 @@ function handleMouseMove(e, captchaId) {
             circle.selected = true;
             selectedCircles[captchaId].push(circle);
             userPatterns[captchaId].push(circle.index);
+            console.log('Added point to pattern:', {
+                captchaId,
+                circleIndex: circle.index,
+                currentPattern: userPatterns[captchaId]
+            });
             
             // Redraw everything
             drawSelection(captchaId);
@@ -599,9 +619,61 @@ function drawSelection(captchaId) {
     drawNoiseElements(ctx, captchaId);
 }
 
+// Add toast message function
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Add toast to body
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
+// Update verifyPattern function
 function verifyPattern(captchaId) {
-    // For demo purposes, any pattern with at least 3 nodes is accepted
-    return userPatterns[captchaId] && userPatterns[captchaId].length >= 3;
+    const userPattern = userPatterns[captchaId] || [];
+    const expectedPattern = expectedPatterns[captchaId] || [];
+    
+    console.log('CAPTCHA Verification:', {
+        captchaId,
+        userPattern,
+        expectedPattern,
+        userPatternLength: userPattern.length,
+        expectedPatternLength: expectedPattern.length
+    });
+    
+    // Check if patterns have the same length
+    if (userPattern.length !== expectedPattern.length) {
+        console.log('Pattern length mismatch');
+        showToast('CAPTCHA verification failed', 'error');
+        return false;
+    }
+    
+    // Compare each node in the pattern
+    for (let i = 0; i < userPattern.length; i++) {
+        if (userPattern[i] !== expectedPattern[i]) {
+            console.log(`Pattern mismatch at index ${i}: user=${userPattern[i]}, expected=${expectedPattern[i]}`);
+            showToast('CAPTCHA verification failed', 'error');
+            return false;
+        }
+    }
+    
+    console.log('Pattern verification successful');
+    return true;
 }
 
 // Create dashboard after login
@@ -620,16 +692,25 @@ async function handleLogin(e) {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     
+    // Debug log all patterns
+    console.log('All patterns:', {
+        userPatterns,
+        expectedPatterns,
+        loginCaptcha: userPatterns['login-captcha'],
+        expectedLoginCaptcha: expectedPatterns['login-captcha']
+    });
+    
     // Validate form
     if (!email || !password) {
         loginError.textContent = 'Please fill in all fields';
         return;
     }
     
-    // Make CAPTCHA validation very lenient for testing
-    // Simply check if they've clicked at least one node
-    if (userPatterns.login.length === 0) {
-        loginError.textContent = 'Please trace the CAPTCHA pattern';
+    // Verify CAPTCHA pattern
+    const captchaValid = verifyPattern('login-captcha');
+    if (!captchaValid) {
+        loginError.textContent = 'CAPTCHA pattern is incorrect. Please trace the arrow pattern again.';
+        generateCaptcha('login-captcha');
         return;
     }
     
@@ -645,7 +726,8 @@ async function handleLogin(e) {
             body: JSON.stringify({ 
                 email, 
                 password,
-                captchaPattern: userPatterns.login 
+                captchaPattern: userPatterns['login-captcha'],
+                expectedPattern: expectedPatterns['login-captcha']
             })
         });
 
@@ -654,16 +736,8 @@ async function handleLogin(e) {
 
         if (response.ok) {
             console.log("Login successful, redirecting to dashboard");
-            // Use direct window location change for more reliable redirection
             window.location.href = '/dashboard.html';
         } else {
-            // For testing purposes, try the hardcoded test account if login fails
-            if (email === 'test@example.com' && password === '123456') {
-                console.log("Using test account bypass");
-                window.location.href = '/dashboard.html';
-                return;
-            }
-            
             // Show error and generate new CAPTCHA
             loginError.textContent = data.error || 'Login failed. Please try again.';
             generateCaptcha('login-captcha');
@@ -695,7 +769,7 @@ async function handleRegister(e) {
         return;
     }
     
-    // Always validate CAPTCHA, but then proceed with registration
+    // Verify CAPTCHA pattern
     const captchaValid = verifyPattern('register-captcha');
     if (!captchaValid) {
         registerError.textContent = 'CAPTCHA pattern is incorrect. Please trace the arrow pattern again.';
@@ -703,7 +777,6 @@ async function handleRegister(e) {
         return;
     }
     
-    // CAPTCHA is valid, proceed with registration
     try {
         console.log("Sending register request");
         const response = await fetch('/api/register', {
@@ -714,7 +787,8 @@ async function handleRegister(e) {
             body: JSON.stringify({ 
                 email, 
                 password,
-                captchaPattern: userPatterns.register 
+                captchaPattern: userPatterns['register-captcha'],
+                expectedPattern: expectedPatterns['register-captcha']
             })
         });
 
@@ -974,4 +1048,219 @@ function showErrorMessage(message) {
             document.body.removeChild(errorElement);
         }, 300);
     }, 5000);
-} 
+}
+
+// Update login form handler
+document.getElementById('loginForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const userEmail = document.getElementById('loginEmail').value;
+    const userPassword = document.getElementById('loginPassword').value;
+    const userCaptchaPattern = userPatterns['login-captcha'] || [];
+    const expectedPattern = expectedPatterns['login-captcha'] || [];
+    
+    if (userCaptchaPattern.length === 0) {
+        document.getElementById('login-messages').innerHTML = 
+            '<div class="error-message">Please trace the pattern</div>';
+        return;
+    }
+    
+    // Verify CAPTCHA pattern
+    if (!verifyPattern('login-captcha')) {
+        return;
+    }
+    
+    // Show loading message
+    showToast('Logging in...', 'info');
+    
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: userEmail,
+                password: userPassword,
+                captchaPattern: userCaptchaPattern,
+                expectedPattern: expectedPattern
+            }),
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            console.log('User login successful, response:', data);
+            
+            // Show success message
+            showToast('Login successful', 'success');
+            
+            // Reset form
+            document.getElementById('loginForm').reset();
+            generateCaptcha('login-captcha');
+            
+            // Store user info in sessionStorage
+            sessionStorage.clear();
+            sessionStorage.setItem('userEmail', userEmail);
+            sessionStorage.setItem('userType', 'user');
+            sessionStorage.setItem('loggedIn', 'true');
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                window.location.href = data.redirectTo || '/dashboard.html';
+            }, 1000);
+        } else {
+            console.error('Login failed:', data.error);
+            showToast(data.error || 'Login failed', 'error');
+            generateCaptcha('login-captcha');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showToast('An error occurred. Please try again.', 'error');
+        generateCaptcha('login-captcha');
+    }
+});
+
+// Update registration form handler
+document.getElementById('registerForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const userEmail = document.getElementById('registerEmail').value;
+    const userPassword = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirm').value;
+    const userCaptchaPattern = userPatterns['register-captcha'] || [];
+    const expectedPattern = expectedPatterns['register-captcha'] || [];
+    
+    if (userPassword !== confirmPassword) {
+        document.getElementById('register-messages').innerHTML = 
+            '<div class="error-message">Passwords do not match</div>';
+        return;
+    }
+    
+    if (userCaptchaPattern.length === 0) {
+        document.getElementById('register-messages').innerHTML = 
+            '<div class="error-message">Please trace the pattern</div>';
+        return;
+    }
+    
+    // Verify CAPTCHA pattern
+    if (!verifyPattern('register-captcha')) {
+        return;
+    }
+    
+    // Show loading message
+    showToast('Registering...', 'info');
+    
+    try {
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: userEmail,
+                password: userPassword,
+                captchaPattern: userCaptchaPattern,
+                expectedPattern: expectedPattern
+            }),
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            console.log('Registration successful, response:', data);
+            
+            // Show success message
+            showToast('Registered successfully', 'success');
+            
+            // Reset form
+            document.getElementById('registerForm').reset();
+            generateCaptcha('register-captcha');
+            
+            // Switch to login tab
+            document.getElementById('login-tab').click();
+        } else {
+            console.error('Registration failed:', data.error);
+            showToast(data.error || 'Registration failed', 'error');
+            generateCaptcha('register-captcha');
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        showToast('An error occurred. Please try again.', 'error');
+        generateCaptcha('register-captcha');
+    }
+});
+
+// Handle admin login
+document.getElementById('adminForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const adminEmail = document.getElementById('adminEmail').value;
+    const adminPassword = document.getElementById('adminPassword').value;
+    const adminCaptchaPattern = userPatterns['admin-captcha'] || [];
+    const expectedPattern = expectedPatterns['admin-captcha'] || [];
+    
+    if (adminCaptchaPattern.length === 0) {
+        document.getElementById('admin-messages').innerHTML = 
+            '<div class="error-message">Please trace the pattern</div>';
+        return;
+    }
+    
+    // Show loading message
+    document.getElementById('admin-messages').innerHTML = 
+        '<div class="loading-message">Logging in...</div>';
+    
+    try {
+        const response = await fetch('/api/admin-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: adminEmail,
+                password: adminPassword,
+                captchaPattern: adminCaptchaPattern,
+                expectedPattern: expectedPattern
+            }),
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            console.log('Admin login successful, response:', data);
+            
+            // Show success message
+            document.getElementById('admin-messages').innerHTML = 
+                `<div class="success-message">Login successful. Redirecting...</div>`;
+            
+            // Reset form
+            document.getElementById('adminForm').reset();
+            generateCaptcha('admin-captcha');
+            
+            // Store admin info in sessionStorage
+            sessionStorage.clear();
+            sessionStorage.setItem('adminEmail', adminEmail);
+            sessionStorage.setItem('userType', 'admin');
+            sessionStorage.setItem('loggedIn', 'true');
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                console.log('Redirecting to admin dashboard...');
+                window.location.href = data.redirectTo || '/admin-dashboard.html';
+            }, 1000);
+        } else {
+            console.error('Admin login failed:', data.error);
+            document.getElementById('admin-messages').innerHTML = 
+                `<div class="error-message">${data.error || 'Login failed'}</div>`;
+            generateCaptcha('admin-captcha');
+        }
+    } catch (error) {
+        console.error('Admin login error:', error);
+        document.getElementById('admin-messages').innerHTML = 
+            '<div class="error-message">An error occurred. Please try again.</div>';
+        generateCaptcha('admin-captcha');
+    }
+}); 

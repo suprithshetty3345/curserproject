@@ -275,6 +275,22 @@
                 justify-content: space-between;
             }
         }
+        
+        .btn-logout {
+            background-color: #f8f9fa;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+        
+        .btn-logout:hover {
+            background-color: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -283,6 +299,7 @@
             <h1 class="page-title">My Bookings</h1>
             <div class="header-actions">
                 <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+                <button id="logout-btn" class="btn-logout">Logout</button>
             </div>
         </div>
         
@@ -351,6 +368,36 @@
             
             // Check if user is logged in
             checkUserSession();
+            
+            // Set up logout button
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                try {
+                    if(confirm('Are you sure you want to logout?')) {
+                        // Call server logout endpoint
+                        const response = await fetch('/api/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Logout failed');
+                        }
+
+                        // Clear session storage
+                        sessionStorage.clear();
+                        localStorage.clear();
+                        
+                        // Redirect to login page
+                        window.location.href = 'index.html';
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Error during logout. Please try again.');
+                }
+            });
         });
         
         // Check if user is logged in
@@ -593,6 +640,16 @@
                     type: 'request'
                 }))
             ];
+            
+            // Filter out approved requests that have corresponding confirmed bookings
+            allBookings = allBookings.filter(booking => {
+                if (booking.type === 'request' && booking.status === 'approved') {
+                    // Check if there's a corresponding confirmed booking
+                    const hasConfirmedBooking = bookings.some(b => b.requestId === booking.id);
+                    return !hasConfirmedBooking; // Only keep if there's no corresponding confirmed booking
+                }
+                return true;
+            });
             
             // Apply filters
             let filteredBookings = allBookings.filter(booking => {

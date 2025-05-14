@@ -541,22 +541,35 @@
         
         // Setup functions
         function setupLogoutButton() {
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        try {
-            if(confirm('Are you sure you want to logout?')) {
-                // Clear session storage
-                sessionStorage.clear();
-                localStorage.clear();
-                
-                // Redirect to login page
-                window.location.href = 'index.html';
-            }
-        } catch (error) {
-            console.error('Logout error:', error);
-            alert('Error during logout. Please try again.');
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                try {
+                    if(confirm('Are you sure you want to logout?')) {
+                        // Call server logout endpoint
+                        const response = await fetch('/api/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Logout failed');
+                        }
+
+                        // Clear session storage
+                        sessionStorage.clear();
+                        localStorage.clear();
+                        
+                        // Redirect to login page
+                        window.location.href = 'index.html';
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Error during logout. Please try again.');
+                }
+            });
         }
-    });
-}
 
         function setupResourceCardButtons() {
             document.querySelectorAll('.card-button').forEach(button => {
@@ -729,7 +742,7 @@
                 <p><strong>Account created:</strong> <span id="account-created">Loading...</span></p>
                 <p class="user-actions">
                     <a href="my-bookings.html" class="btn-view-bookings">View My Bookings</a>
-                    <button id="logout-btn">Logout</button>
+                    <button id="logout-btn" onclick="handleLogout()">Logout</button>
                 </p>
             </div>
             
@@ -829,18 +842,6 @@
                         <h3 class="category-title">Open Fields</h3>
                     </div>
                     <div class="resource-cards">
-                        <div class="resource-card" data-resource-id="main_sports_field">
-                            <div class="card-image">
-                                <img src="https://images.shiksha.com/mediadata/images/1744391197phpQ6ApO6.jpeg">
-                            </div>
-                            <div class="card-content">
-                                <span class="resource-tag tag-field">Open Field</span>
-                                <h3 class="card-title">Cricket Field</h3>
-                                <p class="resource-capacity">Capacity: 50+ players</p>
-                                <p class="card-description">Multi-purpose open field suitable for football, cricket, and athletic events.</p>
-                                <a href="availability.html" class="card-button">View Availability</a>
-                            </div>
-                        </div>
                         
                             <div class="resource-cards">
                                 <div class="resource-card" data-resource-id="main_sports_field">
@@ -849,7 +850,7 @@
                                     </div>
                                     <div class="card-content">
                                         <span class="resource-tag tag-field">Open Field</span>
-                                        <h3 class="card-title">football field</h3>
+                                        <h3 class="card-title">Main field</h3>
                                         <p class="resource-capacity">Capacity: 50+ players</p>
                                         <p class="card-description">Multi-purpose open field suitable for football, cricket, and athletic events.</p>
                                         <a href="availability.html" class="card-button">View Availability</a>
@@ -1369,6 +1370,38 @@
             // Initial render
             renderEvents();
         });
+    </script>
+
+    <script>
+        // Add this function to handle logout
+        async function handleLogout() {
+            try {
+                if(confirm('Are you sure you want to logout?')) {
+                    // Call server logout endpoint
+                    const response = await fetch('/api/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Logout failed');
+                    }
+
+                    // Clear session storage
+                    sessionStorage.clear();
+                    localStorage.clear();
+                    
+                    // Redirect to login page
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Error during logout. Please try again.');
+            }
+        }
     </script>
 </body>
 </html> 

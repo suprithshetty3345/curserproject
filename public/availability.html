@@ -361,7 +361,6 @@
                 </div>
                 <div class="user-info">
                     <span class="user-name">Loading...</span>
-                    <a href="#" class="logout-btn" onclick="logout()">Logout</a>
                 </div>
             </div>
             
@@ -393,7 +392,43 @@
                 </div>
                 
                 <div id="availability-grid" class="availability-grid">
-                    <!-- Resource availability will be loaded here by JavaScript -->
+                    <!-- Open Fields Section -->
+                    <div class="resource-category">
+                        <div class="category-header">
+                            <h3 class="category-title">Open Fields</h3>
+                        </div>
+                        <div class="resource-cards">
+                            <!-- Cricket Field -->
+                            <div class="resource-card" data-resource-id="cricket_field">
+                                <div class="card-image">
+                                    <img src="https://images.shiksha.com/mediadata/images/1744391197phpQ6ApO6.jpeg" alt="Cricket Field">
+                                </div>
+                                <div class="card-content">
+                                    <span class="resource-tag tag-field">Open Field</span>
+                                    <h3 class="card-title">Cricket Field</h3>
+                                    <p class="resource-capacity">Capacity: 50+ players</p>
+                                    <p class="card-description">Professional cricket field with proper pitch and boundary markings.</p>
+                                    <a href="availability.html" class="card-button">View Availability</a>
+                                </div>
+                            </div>
+
+                            <!-- Football Field -->
+                            <div class="resource-card" data-resource-id="football_field">
+                                <div class="card-image">
+                                    <img src="https://www.educationworldngo.com/wp-content/uploads/2024/03/2023-02-15.jpg" alt="Football Field">
+                                </div>
+                                <div class="card-content">
+                                    <span class="resource-tag tag-field">Open Field</span>
+                                    <h3 class="card-title">Football Field</h3>
+                                    <p class="resource-capacity">Capacity: 50+ players</p>
+                                    <p class="card-description">Standard football field with goal posts and proper markings.</p>
+                                    <a href="availability.html" class="card-button">View Availability</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other resource categories will be loaded here -->
                     <div class="loading-indicator">
                         <p>Loading resources...</p>
                     </div>
@@ -430,55 +465,6 @@
                 .catch(error => {
                     console.error('Error loading profile:', error);
                 });
-        }
-        
-        // Logout function
-        function logout() {
-            try {
-                // Show loading indicator
-                const logoutBtn = document.getElementById('logout-btn');
-                const originalText = logoutBtn.textContent;
-                logoutBtn.textContent = 'Logging out...';
-                logoutBtn.disabled = true;
-                
-                // Use POST method for logout as expected by the server
-                fetch('/api/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        console.log('Logout successful');
-                        // Clear any client-side data
-                        sessionStorage.clear();
-                        localStorage.removeItem('userProfile');
-                        // Redirect to login page
-                        window.location.href = '/index.html';
-                    } else {
-                        console.error('Logout failed:', response);
-                        alert('Logout failed. Please try again.');
-                        // Reset button
-                        logoutBtn.textContent = originalText;
-                        logoutBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Logout error:', error);
-                    alert('Error during logout. Please try again.');
-                    // Reset button
-                    logoutBtn.textContent = originalText;
-                    logoutBtn.disabled = false;
-                });
-            } catch (error) {
-                console.error('Unexpected logout error:', error);
-                alert('Error during logout. Please try again.');
-                // Reset button in case of unexpected error
-                const logoutBtn = document.getElementById('logout-btn');
-                logoutBtn.textContent = 'Logout';
-                logoutBtn.disabled = false;
-            }
         }
         
         // Load user profile on page load

@@ -172,14 +172,21 @@ const RESOURCE_CODES = {
 
 // Resources requiring admin approval
 const RESOURCES_REQUIRING_APPROVAL = [
+    // Seminar Halls
     'cs_seminar_hall',
     'is_seminar_hall',
     'ec_seminar_hall',
     'aiml_seminar_hall',
     'mech_seminar_hall',
+    // Auditoriums
     'jubilee_auditorium_1',
     'jubilee_auditorium_2',
-    'badminton_court_1'
+    // Indoor Stadiums
+    'badminton_court_1',
+    'badminton_court_2',
+    'badminton_court_3',
+    // Outdoor Fields
+    'main_sports_field'
 ];
 
 // Resource display names for emails and UI
@@ -206,7 +213,7 @@ const frozenResources = [];
 
 // Resources array definition
 const resources = [
-    // Indoor Stadiums - Direct Booking
+    // Indoor Stadiums
     {
         id: 'badminton_court_1',
         name: 'Badminton Court 1',
@@ -216,7 +223,7 @@ const resources = [
         capacity: 30,
         location: 'Indoor Stadium, Ground Floor',
         facilities: 'Proper lighting, professional flooring, equipment rental',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminEmails: ['sports.admin@example.com']
     },
     {
@@ -228,7 +235,7 @@ const resources = [
         capacity: 30,
         location: 'Indoor Stadium, Ground Floor',
         facilities: 'Standard lighting, equipment rental available',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminEmails: ['sports.admin@example.com']
     },
     {
@@ -240,11 +247,11 @@ const resources = [
         capacity: 50,
         location: 'Indoor Stadium, First Floor',
         facilities: 'Professional lighting, spectator seating, equipment rental',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminEmails: ['sports.admin@example.com']
     },
     
-    // Open Fields - Direct Booking
+    // Open Fields
     {
         id: 'main_sports_field',
         name: 'Main Sports Field',
@@ -254,7 +261,7 @@ const resources = [
         capacity: 100,
         location: 'Central Campus',
         facilities: 'Marked boundaries, equipment storage, drinking water',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminEmails: ['sports.admin@example.com']
     },
     
@@ -707,15 +714,13 @@ function notifyResourceBookingAdmins(resourceId, notificationData) {
 
 // Routes
 app.post('/api/register', async (req, res) => {
-    const { email, password, captchaPattern } = req.body;
+    const { email, password, captchaPattern, expectedPattern } = req.body;
     
-    console.log('Register attempt:', { email, captchaPattern });
-    
-    // Verify CAPTCHA pattern (very lenient for testing)
-    if (!verifyCaptchaPattern(captchaPattern)) {
-        return res.status(400).json({ error: 'Invalid CAPTCHA pattern' });
+    // Verify CAPTCHA
+    if (!verifyCaptchaPattern(captchaPattern, expectedPattern)) {
+        return res.status(400).json({ error: 'CAPTCHA verification failed' });
     }
-
+    
     try {
         // Check if user already exists
         const existingUser = users.find(user => user.email === email);
@@ -745,16 +750,14 @@ app.post('/api/register', async (req, res) => {
 });
 
 app.post('/api/login', async (req, res) => {
+    const { email, password, captchaPattern, expectedPattern } = req.body;
+    
+    // Verify CAPTCHA
+    if (!verifyCaptchaPattern(captchaPattern, expectedPattern)) {
+        return res.status(400).json({ error: 'CAPTCHA verification failed' });
+    }
+    
     try {
-        const { email, password, captchaPattern } = req.body;
-        
-        // Verify CAPTCHA
-        if (!verifyCaptchaPattern(captchaPattern)) {
-            return res.status(400).json({ error: 'Invalid CAPTCHA' });
-        }
-        
-        console.log('Login attempt:', { email, captchaPattern });
-        
         // Check if admin
         const admin = admins.find(admin => admin.email === email);
         
@@ -855,25 +858,14 @@ app.post('/api/login', async (req, res) => {
 
 // Admin-specific login route
 app.post('/api/admin-login', async (req, res) => {
+    const { email, password, captchaPattern, expectedPattern } = req.body;
+    
+    // Verify CAPTCHA
+    if (!verifyCaptchaPattern(captchaPattern, expectedPattern)) {
+        return res.status(400).json({ error: 'CAPTCHA verification failed' });
+    }
+    
     try {
-        const { email, password, captchaPattern } = req.body;
-        
-        // Debug request data
-        console.log('Admin login attempt with data:', { 
-            email, 
-            passwordProvided: !!password,
-            captchaProvided: !!captchaPattern,
-            captchaLength: captchaPattern ? captchaPattern.length : 0
-        });
-        
-        // Verify CAPTCHA
-        if (!verifyCaptchaPattern(captchaPattern)) {
-            console.log('Admin login failed: Invalid CAPTCHA for', email);
-            return res.status(400).json({ error: 'Invalid CAPTCHA' });
-        }
-        
-        console.log('Admin login attempt for:', email);
-        
         // Find admin account
         const admin = admins.find(admin => admin.email === email);
         
@@ -940,15 +932,32 @@ app.post('/api/admin-login', async (req, res) => {
 });
 
 // CAPTCHA verification function - very lenient for testing
-function verifyCaptchaPattern(pattern) {
-    console.log('Verifying CAPTCHA pattern:', pattern);
+function verifyCaptchaPattern(pattern, expectedPattern) {
+    console.log('Verifying CAPTCHA pattern:', {
+        userPattern: pattern,
+        expectedPattern: expectedPattern
+    });
     
-    // Just check if the pattern exists and has at least one node
-    if (!Array.isArray(pattern) || pattern.length < 1) {
-        console.log('CAPTCHA verification failed: Invalid pattern');
+    // Check if pattern exists and is an array
+    if (!Array.isArray(pattern) || !Array.isArray(expectedPattern)) {
+        console.log('CAPTCHA verification failed: Invalid pattern format');
         return false;
     }
-
+    
+    // Check if patterns have the same length
+    if (pattern.length !== expectedPattern.length) {
+        console.log('CAPTCHA verification failed: Pattern length mismatch');
+        return false;
+    }
+    
+    // Compare each node in the pattern
+    for (let i = 0; i < pattern.length; i++) {
+        if (pattern[i] !== expectedPattern[i]) {
+            console.log(`CAPTCHA verification failed: Pattern mismatch at index ${i}`);
+            return false;
+        }
+    }
+    
     console.log('CAPTCHA verification passed');
     return true;
 }

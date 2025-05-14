@@ -19,24 +19,24 @@
         <!-- User Login Form -->
         <div class="form-container active" id="login-form">
             <h2>User Login</h2>
-            <form id="user-login">
+            <form id="loginForm">
                 <div class="input-group">
-                    <label for="user-email">Email</label>
-                    <input type="email" id="user-email" name="email" required>
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" name="email" required>
                 </div>
                 <div class="input-group">
-                    <label for="user-password">Password</label>
-                    <input type="password" id="user-password" name="password" required>
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required>
                 </div>
                 
                 <div class="captcha-container">
                     <h3>Trace Pattern CAPTCHA</h3>
                     <p>Please trace the arrow pattern to continue</p>
                     <div class="captcha-wrapper">
-                        <canvas id="user-captcha" width="300" height="300"></canvas>
-                        <div id="user-messages" class="messages"></div>
+                        <canvas id="login-captcha" width="300" height="300"></canvas>
+                        <div id="login-messages" class="messages"></div>
                     </div>
-                    <button type="button" id="user-reset-captcha" class="reset-btn">Try New Pattern</button>
+                    <button type="button" id="login-reset-captcha" class="reset-btn">Try New Pattern</button>
                 </div>
                 
                 <button type="submit" class="submit-btn">Login</button>
@@ -46,18 +46,18 @@
         <!-- User Registration Form -->
         <div class="form-container" id="register-form">
             <h2>Create Account</h2>
-            <form id="register">
+            <form id="registerForm">
                 <div class="input-group">
-                    <label for="register-email">Email</label>
-                    <input type="email" id="register-email" name="email" required>
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" name="email" required>
                 </div>
                 <div class="input-group">
-                    <label for="register-password">Password</label>
-                    <input type="password" id="register-password" name="password" required minlength="6">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" name="password" required minlength="6">
                 </div>
                 <div class="input-group">
-                    <label for="register-confirm">Confirm Password</label>
-                    <input type="password" id="register-confirm" name="confirm" required minlength="6">
+                    <label for="registerConfirm">Confirm Password</label>
+                    <input type="password" id="registerConfirm" name="confirm" required minlength="6">
                 </div>
                 
                 <div class="captcha-container">
@@ -65,12 +65,11 @@
                     <p>Please trace the arrow pattern to continue</p>
                     <div class="captcha-wrapper">
                         <canvas id="register-captcha" width="300" height="300"></canvas>
-                        <div id="register-captcha-error" class="error-message"></div>
+                        <div id="register-messages" class="messages"></div>
                     </div>
                     <button type="button" id="register-reset-captcha" class="reset-btn">Try New Pattern</button>
                 </div>
                 
-                <div id="register-messages" class="messages"></div>
                 <button type="submit" class="submit-btn">Register</button>
             </form>
         </div>
@@ -78,14 +77,14 @@
         <!-- Admin Login Form -->
         <div class="form-container" id="admin-form">
             <h2>Admin Login</h2>
-            <form id="admin-login">
+            <form id="adminForm">
                 <div class="input-group">
-                    <label for="admin-email">Admin Email</label>
-                    <input type="email" id="admin-email" name="email" required>
+                    <label for="adminEmail">Admin Email</label>
+                    <input type="email" id="adminEmail" name="email" required>
                 </div>
                 <div class="input-group">
-                    <label for="admin-password">Password</label>
-                    <input type="password" id="admin-password" name="password" required>
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" name="password" required>
                 </div>
                 
                 <div class="captcha-container">
@@ -93,12 +92,11 @@
                     <p>Please trace the arrow pattern to continue</p>
                     <div class="captcha-wrapper">
                         <canvas id="admin-captcha" width="300" height="300"></canvas>
-                        <div id="admin-captcha-error" class="error-message"></div>
+                        <div id="admin-messages" class="messages"></div>
                     </div>
                     <button type="button" id="admin-reset-captcha" class="reset-btn">Try New Pattern</button>
                 </div>
                 
-                <div id="admin-messages" class="messages"></div>
                 <button type="submit" class="submit-btn">Admin Login</button>
             </form>
         </div>
@@ -131,11 +129,11 @@
             });
             
             // Initialize CAPTCHAs
-            generateCaptcha('user-captcha');
+            generateCaptcha('login-captcha');
             
             // Reset CAPTCHA buttons
-            document.getElementById('user-reset-captcha').addEventListener('click', () => {
-                generateCaptcha('user-captcha');
+            document.getElementById('login-reset-captcha').addEventListener('click', () => {
+                generateCaptcha('login-captcha');
             });
             
             document.getElementById('register-reset-captcha').addEventListener('click', () => {
@@ -147,21 +145,21 @@
             });
             
             // Handle user login
-            document.getElementById('user-login').addEventListener('submit', async function(event) {
+            document.getElementById('loginForm').addEventListener('submit', async function(event) {
                 event.preventDefault();
                 
-                const userEmail = document.getElementById('user-email').value;
-                const userPassword = document.getElementById('user-password').value;
-                const userCaptchaPattern = userPatterns['user-captcha'] || [];
+                const userEmail = document.getElementById('loginEmail').value;
+                const userPassword = document.getElementById('loginPassword').value;
+                const userCaptchaPattern = userPatterns['login-captcha'] || [];
                 
                 if (userCaptchaPattern.length === 0) {
-                    document.getElementById('user-messages').innerHTML = 
+                    document.getElementById('login-messages').innerHTML = 
                         '<div class="error-message">Please trace the pattern</div>';
                     return;
                 }
                 
                 // Show loading message
-                document.getElementById('user-messages').innerHTML = 
+                document.getElementById('login-messages').innerHTML = 
                     '<div class="loading-message">Logging in...</div>';
                 
                 try {
@@ -184,12 +182,12 @@
                         console.log('User login successful, response:', data);
                         
                         // Show success message
-                        document.getElementById('user-messages').innerHTML = 
+                        document.getElementById('login-messages').innerHTML = 
                             `<div class="success-message">Login successful. Redirecting...</div>`;
                         
                         // Reset form
-                        document.getElementById('user-login').reset();
-                        generateCaptcha('user-captcha');
+                        document.getElementById('loginForm').reset();
+                        generateCaptcha('login-captcha');
                         
                         // Store user info in sessionStorage (useful for client-side checks)
                         sessionStorage.clear(); // Clear any existing data
@@ -204,28 +202,28 @@
                         }, 1000);
                     } else {
                         const errorMessage = data.error || 'Login failed. Please check your credentials.';
-                        document.getElementById('user-messages').innerHTML = 
+                        document.getElementById('login-messages').innerHTML = 
                             `<div class="error-message">${errorMessage}</div>`;
                         
                         // Regenerate CAPTCHA
-                        generateCaptcha('user-captcha');
+                        generateCaptcha('login-captcha');
                     }
                 } catch (error) {
                     console.error('User login error:', error);
-                    document.getElementById('user-messages').innerHTML = 
+                    document.getElementById('login-messages').innerHTML = 
                         `<div class="error-message">An error occurred: ${error.message}</div>`;
                     
                     // Regenerate CAPTCHA
-                    generateCaptcha('user-captcha');
+                    generateCaptcha('login-captcha');
                 }
             });
             
             // Registration form submission
-            document.getElementById('register').addEventListener('submit', async (e) => {
+            document.getElementById('registerForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = document.getElementById('register-email').value;
-                const password = document.getElementById('register-password').value;
-                const confirm = document.getElementById('register-confirm').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirm = document.getElementById('registerConfirm').value;
                 
                 // Check if passwords match
                 if (password !== confirm) {
@@ -238,7 +236,8 @@
                 const captchaPattern = userPatterns['register-captcha'] || [];
                 
                 if (captchaPattern.length === 0) {
-                    document.getElementById('register-captcha-error').textContent = 'Please trace the pattern';
+                    document.getElementById('register-messages').innerHTML = 
+                        '<div class="error-message">Please trace the pattern</div>';
                     return;
                 }
                 
@@ -262,7 +261,7 @@
                         `<div class="success-message">Registration successful. Please log in.</div>`;
                     
                     // Reset form
-                    document.getElementById('register').reset();
+                    document.getElementById('registerForm').reset();
                     generateCaptcha('register-captcha');
                     
                     // Switch to login tab
@@ -278,15 +277,15 @@
             });
             
             // Admin login handler
-            document.getElementById('admin-login').addEventListener('submit', async function(event) {
+            document.getElementById('adminForm').addEventListener('submit', async function(event) {
                 event.preventDefault();
                 
                 // Clear previous messages
                 document.getElementById('admin-messages').innerHTML = '';
                 
                 // Get form values
-                const adminEmail = document.getElementById('admin-email').value.trim();
-                const adminPassword = document.getElementById('admin-password').value;
+                const adminEmail = document.getElementById('adminEmail').value.trim();
+                const adminPassword = document.getElementById('adminPassword').value;
                 
                 // Validate form
                 if (!adminEmail || !adminPassword) {
@@ -338,7 +337,7 @@
                             `<div class="success-message">Admin login successful. Redirecting...</div>`;
                         
                         // Reset form
-                        document.getElementById('admin-login').reset();
+                        document.getElementById('adminForm').reset();
                         generateCaptcha('admin-captcha');
                         
                         // Store admin info in sessionStorage (useful for client-side checks)

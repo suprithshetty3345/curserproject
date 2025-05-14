@@ -10,7 +10,7 @@ const resources = [
         capacity: '4 players',
         location: 'Indoor Stadium, Ground Floor',
         facilities: 'Proper lighting, professional flooring, equipment rental',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminContact: 'sports.admin@example.com',
         image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea'
     },
@@ -23,7 +23,7 @@ const resources = [
         capacity: '4 players',
         location: 'Indoor Stadium, Ground Floor',
         facilities: 'Standard lighting, equipment rental available',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminContact: 'sports.admin@example.com',
         image: 'https://images.unsplash.com/photo-1613074884777-88a764f9d1b8'
     },
@@ -36,7 +36,7 @@ const resources = [
         capacity: '4 players + spectators',
         location: 'Indoor Stadium, First Floor',
         facilities: 'Professional lighting, spectator seating, equipment rental',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminContact: 'sports.admin@example.com',
         image: 'https://images.unsplash.com/photo-1625377389601-8782cfb2cc70'
     },
@@ -51,7 +51,7 @@ const resources = [
         capacity: '50+ players',
         location: 'Central Campus',
         facilities: 'Marked boundaries, equipment storage, drinking water',
-        requiresApproval: false, // Direct booking
+        requiresApproval: true, // Changed to require approval
         adminContact: 'sports.admin@example.com',
         image: 'https://images.unsplash.com/photo-1556056504-5c7696c4c28d'
     },
@@ -948,12 +948,7 @@ function setupResourceFiltering() {
     // Update frozen status on initial load
     const resourceCards = document.querySelectorAll('.resource-card');
     updateResourceCards(resourceCards);
-
-
-
-    
 }
-
 
 document.addEventListener('DOMContentLoaded', function () {
     const eventsList = document.getElementById('events-list');
@@ -1027,3 +1022,103 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initial render and start rotation
     rotateEvents();
 });
+
+function showBookingForm(resourceId) {
+    const resource = resources.find(r => r.id === resourceId);
+    if (!resource) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Book ${resource.name}</h2>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" required min="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label for="startTime">Start Time:</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="endTime">End Time:</label>
+                    <input type="time" id="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="purpose">Purpose:</label>
+                    <textarea id="purpose" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="attendees">Number of Attendees:</label>
+                    <input type="number" id="attendees" required min="1" max="${resource.capacity}">
+                </div>
+                <div class="form-group">
+                    <label for="contact">Contact Number:</label>
+                    <input type="tel" id="contact" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="additionalInfo">Additional Information:</label>
+                    <textarea id="additionalInfo"></textarea>
+                </div>
+                <div class="approval-notice">
+                    <i class="fas fa-info-circle"></i>
+                    This resource requires admin approval. Your booking will be pending until approved.
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Booking Request</button>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => {
+        modal.remove();
+    };
+
+    const form = modal.querySelector('#bookingForm');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const bookingData = {
+            resourceId: resource.id,
+            date: document.getElementById('date').value,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value,
+            purpose: document.getElementById('purpose').value,
+            attendees: document.getElementById('attendees').value,
+            contact: document.getElementById('contact').value,
+            email: document.getElementById('email').value,
+            additionalInfo: document.getElementById('additionalInfo').value,
+            status: 'pending'
+        };
+
+        try {
+            const response = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bookingData)
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast('Booking request submitted successfully. Waiting for admin approval.', 'success');
+                modal.remove();
+                loadBookings(); // Refresh the bookings list
+            } else {
+                showToast(data.error || 'Failed to submit booking request', 'error');
+            }
+        } catch (error) {
+            showToast('Error submitting booking request', 'error');
+        }
+    };
+}

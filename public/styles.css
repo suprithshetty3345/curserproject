@@ -1596,54 +1596,38 @@ option:disabled {
     border: 1px dashed #dee2e6;
 }
 
-/* Toast Notifications */
-.toast-container {
+/* Toast Messages */
+.toast {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 9999;
-    max-width: 300px;
-}
-
-.toast {
-    padding: 12px 16px;
+    padding: 12px 24px;
     border-radius: 4px;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    font-size: 14px;
-    animation: slideIn 0.3s ease;
-    transition: opacity 0.3s ease;
     color: white;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.toast-success {
-    background-color: #4CAF50;
-    border-left: 4px solid #2E7D32;
-}
-
-.toast-error {
-    background-color: #F44336;
-    border-left: 4px solid #C62828;
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .toast-info {
     background-color: #2196F3;
-    border-left: 4px solid #1565C0;
 }
 
-.toast-fade-out {
-    opacity: 0;
+.toast-success {
+    background-color: #4CAF50;
 }
 
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+.toast-error {
+    background-color: #f44336;
 }
 
 /* Admin Dashboard Request Tabs */
@@ -1973,4 +1957,20 @@ input:checked + .toggle-slider:before {
 
 #add-event-form button:hover {
     background-color: #0056b3;
+}
+
+.approval-notice {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.approval-notice i {
+    font-size: 1.2em;
 }
