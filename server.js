@@ -178,7 +178,8 @@ const RESOURCES_REQUIRING_APPROVAL = [
     'aiml_seminar_hall',
     'mech_seminar_hall',
     'jubilee_auditorium_1',
-    'jubilee_auditorium_2'
+    'jubilee_auditorium_2',
+    'badminton_court_1'
 ];
 
 // Resource display names for emails and UI
@@ -1654,7 +1655,7 @@ app.post('/api/admin/notifications/mark-read', (req, res) => {
 });
 
 // Admin endpoint to approve a booking request
-app.post('/api/admin/booking-requests/:requestId/approve', (req, res) => {
+app.post('/api/admin/booking-requests/:requestId/approve', async (req, res) => {
     // Check if admin is authenticated
     if (!req.session.adminId || !req.session.isAdmin) {
         console.log('Admin not authenticated for approve request');
@@ -1743,6 +1744,11 @@ app.post('/api/admin/booking-requests/:requestId/approve', (req, res) => {
     };
     
     bookings.push(newBooking);
+
+    //save to mongodb
+    const bookingDoc = new Booking(newBooking);
+    await bookingDoc.save();
+
     console.log('New confirmed booking created from request:', bookingRef);
     
     // Find responsible admins for this resource
